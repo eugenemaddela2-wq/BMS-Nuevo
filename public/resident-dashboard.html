@@ -4,271 +4,1132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resident Dashboard - Barangay Management System</title>
-    <link rel="stylesheet" href="css/resident-dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        :root {
+            --color-primary: #667eea;
+            --color-primary-light: #764ba2;
+            --accent-cyan: #4fc3dc;
+            --accent-green: #26d07c;
+            --accent-teal: #7ee1c7;
+            --text-strong: #ffffff;
+            --text-muted: rgba(255,255,255,0.7);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            color: var(--text-strong);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        aside {
+            width: 280px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.2) 100%);
+            border-right: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .live-clock {
+            padding: 12px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border);
+            margin: 10px;
+            border-radius: 6px;
+            background: var(--glass-bg);
+        }
+
+        nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #fff;
+            padding-left: 24px;
+            color: var(--text-strong);
+        }
+
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #fff;
+            font-weight: 600;
+            padding-left: 24px;
+            color: var(--text-strong);
+        }
+
+        .nav-item i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--glass-border);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #f5576c, #f093fb);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* MAIN CONTENT */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-strong);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .icon-btn .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f5576c;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* SUMMARY CARDS */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, var(--glass-bg), rgba(255,255,255,0.12));
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.3);
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.18));
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .summary-card .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .summary-card h3 {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-strong);
+        }
+
+        /* CONTENT SECTIONS */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* PANELS */
+        .panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        /* FORMS */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-strong);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            background: var(--glass-bg);
+            color: var(--text-strong);
+            font-family: inherit;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            background: rgba(255,255,255,0.12);
+            box-shadow: 0 0 0 3px rgba(79, 195, 220, 0.2);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* TABLES */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        table th {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        table tbody tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* STATUS BADGES */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: rgba(245, 165, 35, 0.2); color: #f5a623; }
+        .status-approved { background: rgba(38, 208, 124, 0.2); color: #26d07c; }
+        .status-processing { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+        .status-completed { background: rgba(38, 208, 124, 0.2); color: #26d07c; }
+        .status-rejected { background: rgba(245, 86, 124, 0.2); color: #f5576c; }
+        .status-in-progress { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+
+        /* MODALS */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal.active {
+            display: flex;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 25px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-strong);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            transform: rotate(90deg);
+            color: #f5576c;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* NOTIFICATIONS */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(38, 208, 124, 0.9), rgba(79, 195, 220, 0.9));
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, rgba(245, 86, 124, 0.9), rgba(245, 165, 35, 0.9));
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(400px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            aside {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+            }
+
+            nav {
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 0;
+            }
+
+            .nav-item {
+                padding: 10px 15px;
+                white-space: nowrap;
+            }
+
+            .content-wrapper {
+                padding: 15px;
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 15px;
+            }
+
+            .header-title {
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- HEADER / TOP NAVIGATION BAR -->
-    <header class="header">
-        <div class="header-left">
-            <div class="logo">
-                <i class="fas fa-city"></i>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <aside>
+            <div class="sidebar-header">
+                <h1>🏢 BMS</h1>
+                <p>Resident Portal</p>
             </div>
-            <h1 class="system-title">BARANGAY MANAGEMENT SYSTEM</h1>
-        </div>
 
-        <div class="header-center">
-            <h2 class="dashboard-title">Resident Dashboard — <span id="residentName">Maria Santos</span></h2>
-            <div style="font-size: 12px; color: #666; margin-top: 4px;">
-                <span data-clock>00:00:00 AM</span> | <span data-date>Loading...</span>
+            <div class="live-clock">
+                <i class="fas fa-clock"></i> <span data-clock>00:00:00</span>
             </div>
-        </div>
 
-        <div class="header-right">
-            <div class="notification-bell">
-                <i class="fas fa-bell"></i>
-                <span class="badge">3</span>
-            </div>
-            <div class="messages-icon">
-                <i class="fas fa-envelope"></i>
-                <span class="badge">2</span>
-            </div>
-            <div class="profile-dropdown">
-                <img src="https://via.placeholder.com/40" alt="Profile" class="avatar">
-                <div class="dropdown-menu">
-                    <a href="#profile"><i class="fas fa-user"></i> Profile</a>
-                    <a href="#settings"><i class="fas fa-cog"></i> Settings</a>
-                    <a href="#signout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <div class="main-container">
-        <!-- LEFT SIDEBAR -->
-        <aside class="sidebar">
-            <nav class="sidebar-nav" id="sidebarNav">
-                <!-- Sidebar content loaded dynamically from sidebars/resident-sidebar.html -->
+            <nav>
+                <a href="#home" class="nav-item active" data-section="home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#profile" class="nav-item" data-section="profile">
+                    <i class="fas fa-user"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="#household" class="nav-item" data-section="household">
+                    <i class="fas fa-users"></i>
+                    <span>Household</span>
+                </a>
+                <a href="#documents" class="nav-item" data-section="documents">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Documents</span>
+                </a>
+                <a href="#complaints" class="nav-item" data-section="complaints">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Complaints</span>
+                </a>
+                <a href="#events" class="nav-item" data-section="events">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Events</span>
+                </a>
+                <a href="#announcements" class="nav-item" data-section="announcements">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Announcements</span>
+                </a>
+                <a href="#messages" class="nav-item" data-section="messages">
+                    <i class="fas fa-comments"></i>
+                    <span>Messages</span>
+                </a>
+                <a href="#help" class="nav-item" data-section="help">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help</span>
+                </a>
             </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </button>
+            </div>
         </aside>
 
-        <!-- MAIN CONTENT AREA -->
-        <main class="main-content">
-            <!-- Content sections loaded dynamically -->
+        <!-- MAIN CONTENT -->
+        <main>
+            <!-- HEADER -->
+            <header>
+                <h1 class="header-title">Resident Dashboard — <span id="resFullName">Resident</span></h1>
+                <div class="header-icons">
+                    <button class="icon-btn" title="Messages">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge" id="messageCount">0</span>
+                    </button>
+                    <button class="icon-btn" title="Notifications">
+                        <i class="fas fa-envelope"></i>
+                        <span class="badge" id="notificationCount">0</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENT AREA -->
+            <div class="content-wrapper">
+                <!-- SUMMARY CARDS -->
+                <div class="summary-cards">
+                    <div class="summary-card" onclick="residentDashboard.showSection('profile')">
+                        <div class="icon">👤</div>
+                        <h3>My Profile</h3>
+                        <div class="number">-</div>
+                    </div>
+                    <div class="summary-card" onclick="residentDashboard.showSection('documents')">
+                        <div class="icon">📋</div>
+                        <h3>Active Requests</h3>
+                        <div class="number" id="documentCount">0</div>
+                    </div>
+                    <div class="summary-card" onclick="residentDashboard.showSection('complaints')">
+                        <div class="icon">⚠️</div>
+                        <h3>Complaints</h3>
+                        <div class="number" id="complaintCount">0</div>
+                    </div>
+                    <div class="summary-card" onclick="residentDashboard.showSection('events')">
+                        <div class="icon">🎉</div>
+                        <h3>Events</h3>
+                        <div class="number" id="eventCount">0</div>
+                    </div>
+                    <div class="summary-card" onclick="residentDashboard.showSection('announcements')">
+                        <div class="icon">🔔</div>
+                        <h3>News</h3>
+                        <div class="number" id="announcementCount">0</div>
+                    </div>
+                </div>
+
+                <!-- HOME SECTION -->
+                <section id="home-section" class="content-section active">
+                    <div class="section-header">
+                        <h2>Welcome to Barangay Management System</h2>
+                    </div>
+
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">Quick Actions</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+                            <button class="btn btn-primary" onclick="openModal('complaintForm')">
+                                <i class="fas fa-exclamation-circle"></i> File Complaint
+                            </button>
+                            <button class="btn btn-primary" onclick="openModal('documentForm')">
+                                <i class="fas fa-file-alt"></i> Request Document
+                            </button>
+                            <button class="btn btn-primary" onclick="openModal('eventForm')">
+                                <i class="fas fa-calendar-alt"></i> Register Event
+                            </button>
+                            <button class="btn btn-primary" onclick="residentDashboard.showSection('announcements')">
+                                <i class="fas fa-bullhorn"></i> View News
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3 style="margin-top: 0;">Recent Activity</h3>
+                        <div id="recentActivityList" style="min-height: 200px;">
+                            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading activity...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PROFILE SECTION -->
+                <section id="profile-section" class="content-section">
+                    <div class="section-header">
+                        <h2>My Profile</h2>
+                        <button class="btn btn-primary" onclick="alert('Edit profile feature coming soon')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="form-row">
+                            <div>
+                                <label>Resident ID</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resId">-</p>
+                            </div>
+                            <div>
+                                <label>Full Name</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resName">-</p>
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 15px;">
+                            <div>
+                                <label>Date of Birth</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resDOB">-</p>
+                            </div>
+                            <div>
+                                <label>Sex</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resSex">-</p>
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 15px;">
+                            <div>
+                                <label>Purok / Zone</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resPurok">-</p>
+                            </div>
+                            <div>
+                                <label>Address</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resAddress">-</p>
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 15px;">
+                            <div>
+                                <label>Contact Number</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resContact">-</p>
+                            </div>
+                            <div>
+                                <label>Email</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resEmail">-</p>
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 15px;">
+                            <div>
+                                <label>Household ID</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resHouseholdId">-</p>
+                            </div>
+                            <div>
+                                <label>Occupation</label>
+                                <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resOccupation">-</p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <label>Marital Status</label>
+                            <p style="margin: 6px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;" id="resMaritalStatus">-</p>
+                        </div>
+
+                        <div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--glass-border);">
+                            <h3 style="margin: 0 0 15px 0; font-size: 14px;">Privacy Settings</h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px;">
+                                    <input type="checkbox" checked>
+                                    <span>Show contact in directory</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px;">
+                                    <input type="checkbox" checked>
+                                    <span>Receive email notifications</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px;">
+                                    <input type="checkbox">
+                                    <span>Receive SMS notifications</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px;">
+                                    <input type="checkbox">
+                                    <span>Enable 2-factor authentication</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- HOUSEHOLD SECTION -->
+                <section id="household-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Household Members</h2>
+                        <button class="btn btn-primary" onclick="openModal('householdForm')">
+                            <i class="fas fa-plus"></i> Add Member
+                        </button>
+                    </div>
+
+                    <div class="panel">
+                        <div id="householdList">
+                            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading members...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DOCUMENTS SECTION -->
+                <section id="documents-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Documents & Requests</h2>
+                        <button class="btn btn-primary" onclick="openModal('documentForm')">
+                            <i class="fas fa-plus"></i> Request
+                        </button>
+                    </div>
+
+                    <div class="panel">
+                        <div id="documentsList">
+                            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading documents...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- COMPLAINTS SECTION -->
+                <section id="complaints-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Complaints & Requests</h2>
+                        <button class="btn btn-primary" onclick="openModal('complaintForm')">
+                            <i class="fas fa-plus"></i> File
+                        </button>
+                    </div>
+
+                    <div class="panel">
+                        <div id="complaintsList">
+                            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading complaints...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- EVENTS SECTION -->
+                <section id="events-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Events & Calendar</h2>
+                    </div>
+
+                    <div class="panel">
+                        <div id="eventsList">
+                            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading events...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ANNOUNCEMENTS SECTION -->
+                <section id="announcements-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Announcements</h2>
+                    </div>
+
+                    <div class="panel">
+                        <div id="announcementsList">
+                            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading announcements...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MESSAGES SECTION -->
+                <section id="messages-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Messages & Inbox</h2>
+                    </div>
+
+                    <div class="panel">
+                        <div id="messagesList">
+                            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading messages...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- HELP SECTION -->
+                <section id="help-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Help & Support</h2>
+                    </div>
+
+                    <div class="panel">
+                        <h3 style="margin-top: 0; font-size: 14px;">Frequently Asked Questions</h3>
+
+                        <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+                            <p style="margin: 0 0 8px 0; font-weight: 600; cursor: pointer; font-size: 12px;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';">
+                                📌 How long does document processing take?
+                            </p>
+                            <p style="margin: 8px 0 0 0; color: var(--text-muted); font-size: 11px; display: none;">Most documents are processed within 3-5 business days. Urgent requests may be available subject to additional fees.</p>
+                        </div>
+
+                        <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+                            <p style="margin: 0 0 8px 0; font-weight: 600; cursor: pointer; font-size: 12px;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';">
+                                📌 How do I file a complaint?
+                            </p>
+                            <p style="margin: 8px 0 0 0; color: var(--text-muted); font-size: 11px; display: none;">Click the "File Complaint" button. Fill in the details, select a category, and submit. You'll receive status updates via email.</p>
+                        </div>
+
+                        <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+                            <p style="margin: 0 0 8px 0; font-weight: 600; cursor: pointer; font-size: 12px;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';">
+                                📌 What documents can I request?
+                            </p>
+                            <p style="margin: 8px 0 0 0; color: var(--text-muted); font-size: 11px; display: none;">Available documents include Barangay Clearance, Residency Certificate, Business Permit, and Certificates of Good Moral Character.</p>
+                        </div>
+
+                        <h3 style="margin: 20px 0 15px 0; font-size: 14px;">Contact Support</h3>
+                        <form style="display: grid; gap: 12px;">
+                            <div class="form-group">
+                                <label>Subject</label>
+                                <input type="text" placeholder="Brief description...">
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select>
+                                    <option>Select category...</option>
+                                    <option>Technical Issue</option>
+                                    <option>Document Request</option>
+                                    <option>Complaint Status</option>
+                                    <option>Account Issue</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Message</label>
+                                <textarea rows="3" placeholder="Describe your issue..."></textarea>
+                            </div>
+                            <button type="button" class="btn btn-primary" style="width: 100%;">Submit Ticket</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
         </main>
     </div>
 
     <!-- MODALS -->
-    <!-- Complaint Form Modal -->
     <div id="complaintForm" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>File a Complaint</h2>
                 <button class="modal-close" onclick="closeModal('complaintForm')">&times;</button>
             </div>
-            <form class="modal-form">
-                <div class="form-group">
-                    <label>Category <span class="required">*</span></label>
-                    <select required>
-                        <option value="">Select category...</option>
-                        <option>Infrastructure</option>
-                        <option>Noise/Disturbance</option>
-                        <option>Safety</option>
-                        <option>Services</option>
-                        <option>Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Subject <span class="required">*</span></label>
-                    <input type="text" placeholder="Brief description..." required>
-                </div>
-                <div class="form-group">
-                    <label>Description <span class="required">*</span></label>
-                    <textarea rows="4" placeholder="Detailed description..." required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Location (Purok)</label>
-                    <select>
-                        <option value="">Select purok...</option>
-                        <option>Zone 1</option>
-                        <option>Zone 2</option>
-                        <option>Zone 3</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Attach Photos</label>
-                    <input type="file" accept="image/*" multiple>
-                </div>
-                <div class="form-group checkbox">
-                    <label>
-                        <input type="checkbox"> Mark as confidential
+            <div class="modal-body">
+                <form style="display: grid; gap: 12px;">
+                    <div class="form-group">
+                        <label>Category <span style="color: #f5576c;">*</span></label>
+                        <select name="category" required>
+                            <option>Select category...</option>
+                            <option>Infrastructure</option>
+                            <option>Noise/Disturbance</option>
+                            <option>Safety</option>
+                            <option>Services</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject <span style="color: #f5576c;">*</span></label>
+                        <input type="text" name="subject" placeholder="Brief description..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description <span style="color: #f5576c;">*</span></label>
+                        <textarea name="description" rows="4" placeholder="Detailed description..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" name="location" placeholder="Specific location...">
+                    </div>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px;">
+                        <input type="checkbox" name="confidential">
+                        <span>Mark as confidential</span>
                     </label>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('complaintForm')">Cancel</button>
-                    <button type="submit" class="btn-primary">Submit Complaint</button>
-                </div>
-            </form>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button type="button" class="btn btn-primary" onclick="residentDashboard.submitComplaint()">Submit</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('complaintForm')">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Document Request Modal -->
     <div id="documentForm" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Request Document</h2>
                 <button class="modal-close" onclick="closeModal('documentForm')">&times;</button>
             </div>
-            <form class="modal-form">
-                <div class="form-group">
-                    <label>Document Type <span class="required">*</span></label>
-                    <select required>
-                        <option value="">Select document...</option>
-                        <option>Barangay Clearance</option>
-                        <option>Residency Certificate</option>
-                        <option>Business Permit</option>
-                        <option>Certificate of Good Moral Character</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Purpose</label>
-                    <textarea rows="3" placeholder="Purpose of the document..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Upload Supporting Documents</label>
-                    <div class="file-upload">
-                        <input type="file" multiple>
-                        <p>Drag files here or click to upload</p>
+            <div class="modal-body">
+                <form style="display: grid; gap: 12px;">
+                    <div class="form-group">
+                        <label>Document Type <span style="color: #f5576c;">*</span></label>
+                        <select name="documentType" required>
+                            <option>Select document...</option>
+                            <option>Barangay Clearance</option>
+                            <option>Residency Certificate</option>
+                            <option>Business Permit</option>
+                            <option>Certificate of Good Moral Character</option>
+                        </select>
                     </div>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress" style="width: 0%"></div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('documentForm')">Cancel</button>
-                    <button type="submit" class="btn-primary">Submit Request</button>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label>Purpose <span style="color: #f5576c;">*</span></label>
+                        <textarea name="purpose" rows="3" placeholder="State the purpose..." required></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button type="button" class="btn btn-primary" onclick="residentDashboard.submitDocumentRequest()">Submit</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('documentForm')">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Event Registration Modal -->
     <div id="eventForm" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Register for Event</h2>
                 <button class="modal-close" onclick="closeModal('eventForm')">&times;</button>
             </div>
-            <form class="modal-form">
-                <div class="form-group">
-                    <label>Event <span class="required">*</span></label>
-                    <select required>
-                        <option value="">Select event...</option>
-                        <option>Barangay Fiesta</option>
-                        <option>Health and Wellness Seminar</option>
-                        <option>Year-End Community Gathering</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Number of Attendees <span class="required">*</span></label>
-                    <input type="number" min="1" value="1" required>
-                </div>
-                <div class="form-group">
-                    <label>Special Requirements</label>
-                    <textarea rows="3" placeholder="Dietary restrictions, accessibility needs, etc..."></textarea>
-                </div>
-                <div class="form-group checkbox">
-                    <label>
-                        <input type="checkbox"> I agree to the event terms and conditions
-                    </label>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('eventForm')">Cancel</button>
-                    <button type="submit" class="btn-primary">Confirm Registration</button>
-                </div>
-            </form>
+            <div class="modal-body">
+                <form style="display: grid; gap: 12px;">
+                    <div class="form-group">
+                        <label>Event <span style="color: #f5576c;">*</span></label>
+                        <input type="hidden" id="eventIdField">
+                        <select id="eventSelect" required>
+                            <option>Select event...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Number of Attendees <span style="color: #f5576c;">*</span></label>
+                        <input type="number" id="attendeeCountField" min="1" max="20" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Special Requirements</label>
+                        <textarea id="specialRequirementsField" rows="2" placeholder="Any special needs..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button type="button" class="btn btn-primary" onclick="residentDashboard.submitEventRegistration()">Confirm</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('eventForm')">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Household Member Modal -->
     <div id="householdForm" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Add Household Member</h2>
                 <button class="modal-close" onclick="closeModal('householdForm')">&times;</button>
             </div>
-            <form class="modal-form">
-                <div class="form-group">
-                    <label>Full Name <span class="required">*</span></label>
-                    <input type="text" placeholder="First Middle Last Name" required>
-                </div>
-                <div class="form-group">
-                    <label>Relation <span class="required">*</span></label>
-                    <select required>
-                        <option value="">Select relation...</option>
-                        <option>Spouse</option>
-                        <option>Child</option>
-                        <option>Parent</option>
-                        <option>Sibling</option>
-                        <option>Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Date of Birth <span class="required">*</span></label>
-                    <input type="date" required>
-                </div>
-                <div class="form-group">
-                    <label>Sex</label>
-                    <select>
-                        <option>Male</option>
-                        <option>Female</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Upload Supporting Documents</label>
-                    <input type="file" multiple>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('householdForm')">Cancel</button>
-                    <button type="submit" class="btn-primary">Add Member</button>
-                </div>
-            </form>
+            <div class="modal-body">
+                <form style="display: grid; gap: 12px;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name <span style="color: #f5576c;">*</span></label>
+                            <input type="text" name="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name <span style="color: #f5576c;">*</span></label>
+                            <input type="text" name="lastName" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth <span style="color: #f5576c;">*</span></label>
+                        <input type="date" name="dateOfBirth" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Sex</label>
+                            <select name="sex">
+                                <option>Male</option>
+                                <option>Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Relation <span style="color: #f5576c;">*</span></label>
+                            <select name="relation" required>
+                                <option>Spouse</option>
+                                <option>Child</option>
+                                <option>Parent</option>
+                                <option>Sibling</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button type="button" class="btn btn-primary" onclick="residentDashboard.submitHouseholdMember()">Add</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('householdForm')">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Floating Action Button (Mobile) -->
-    <div class="fab-menu">
-        <button class="fab-main">
-            <i class="fas fa-plus"></i>
-        </button>
-        <div class="fab-options">
-            <button class="fab-option" onclick="openModal('complaintForm')" title="File Complaint">
-                <i class="fas fa-exclamation-circle"></i>
-            </button>
-            <button class="fab-option" onclick="openModal('documentForm')" title="Request Document">
-                <i class="fas fa-file-alt"></i>
-            </button>
-            <button class="fab-option" onclick="openModal('eventForm')" title="Register Event">
-                <i class="fas fa-calendar-alt"></i>
-            </button>
-        </div>
-    </div>
-
-    <script src="js/realtime.js"></script>
-    <script src="js/auth-redirect.js"></script>
-    <script src="js/sidebar-loader.js"></script>
-    <script src="js/content-loader.js"></script>
-    <script src="js/resident-dashboard.js"></script>
-    <script>
-        // Load resident dashboard sections dynamically
-        document.addEventListener('DOMContentLoaded', async () => {
-            const residentSidebar = ['clock', 'home', 'profile', 'household', 'documents', 'complaints', 'events', 'announcements', 'messages', 'help'];
-            const residentSections = ['home', 'profile', 'household', 'documents', 'complaints', 'events', 'announcements', 'messages', 'help'];
-            
-            await loadSidebarSections('resident', residentSidebar);
-            await loadContentSections('resident', residentSections);
-            setupNavigation();
-        });
-    </script>
+    <!-- SCRIPTS -->
+    <script src="js/resident-dashboard-manager.js"></script>
 </body>
 </html>

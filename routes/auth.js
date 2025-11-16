@@ -540,4 +540,85 @@ router.get('/api/auth/me', authenticate, async (req, res) => {
     }
 });
 
+// ============================================================================
+// GET CURRENT USER PROFILE WITH ROLE-SPECIFIC DATA
+// ============================================================================
+
+router.get('/api/auth/profile', authenticate, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        
+        // Get user basic info
+        const userResult = await query(
+            `SELECT id, username, email, first_name, last_name, role, status
+             FROM users
+             WHERE id = $1`,
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        const user = userResult.rows[0];
+        const profile = {
+            success: true,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                fullName: `${user.first_name} ${user.last_name}`,
+                role: user.role,
+                status: user.status
+            }
+        };
+
+        // Get role-specific data
+        if (user.role === 'official' || user.role === 'clerk') {
+            const officialResult = await query(
+                `SELECT position, first_name, last_name, office, phone_number
+                 FROM officials
+                 WHERE user_id = $1`,
+                [userId]
+            );
+            
+            if (officialResult.rows.length > 0) {
+                const official = officialResult.rows[0];
+                profile.user.position = official.position;
+                profile.user.office = official.office;
+                profile.user.phoneNumber = official.phone_number;
+            }
+        } else if (user.role === 'resident') {
+            const residentResult = await query(
+                `SELECT purok, contact_number, sex, civil_status
+                 FROM residents
+                 WHERE user_id = $1`,
+                [userId]
+            );
+            
+            if (residentResult.rows.length > 0) {
+                const resident = residentResult.rows[0];
+                profile.user.purok = resident.purok;
+                profile.user.contactNumber = resident.contact_number;
+                profile.user.sex = resident.sex;
+                profile.user.civilStatus = resident.civil_status;
+            }
+        }
+
+        res.json(profile);
+
+    } catch (error) {
+        console.error('Profile fetch error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Profile fetch failed'
+        });
+    }
+});
+
 export default router;

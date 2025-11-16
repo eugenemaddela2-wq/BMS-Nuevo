@@ -9,6 +9,10 @@ import morgan from 'morgan';
 
 // Import routes
 import authRoutes from './routes/auth.js';
+import calendarRoutes from './routes/calendar.js';
+import residentApiRoutes from './routes/resident-api.js';
+import adminApiRoutes from './routes/admin-api.js';
+import officialApiRoutes from './routes/official-api.js';
 
 // Import middleware
 import { logRequest, errorHandler, corsOptions } from './middleware/auth.js';
@@ -52,6 +56,30 @@ app.use('/', express.static(path.join(__dirname, 'public')));
 // ============================================================================
 
 app.use(authRoutes);
+
+// ============================================================================
+// Calendar Routes
+// ============================================================================
+
+app.use(calendarRoutes);
+
+// ============================================================================
+// Resident API Routes
+// ============================================================================
+
+app.use('/api/resident', residentApiRoutes);
+
+// ============================================================================
+// Admin API Routes
+// ============================================================================
+
+app.use('/api/admin', adminApiRoutes);
+
+// ============================================================================
+// Official API Routes
+// ============================================================================
+
+app.use('/api/official', officialApiRoutes);
 
 // ============================================================================
 // Helper: sample data
@@ -129,7 +157,6 @@ app.get('/api/admin/imports/recent', (req,res)=> res.json([{ importId:'imp123', 
 app.get('/api/residents', (req,res)=>{
   res.json([ { residentId:'R-001', firstName:'Juan', lastName:'Dela Cruz', age:30, sex:'M', purok:'A', contact:'09171234567', status:'Active', registeredAt: now() } ]);
 });
-app.get('/api/events', (req,res)=>{ res.json([{ eventId:'E1', title:'Health Drive', organizer:'Health Dept', start: now(), venue: 'Barangay Hall', status:'Published' }]); });
 app.get('/api/announcements', (req,res)=>{ res.json([{ id:'A1', title:'Clearance Processing', audience:'All', start: now(), end: now(), status:'Published' }]); });
 app.get('/api/users', (req,res)=>{ res.json([{ userId:'U1', username:'admin', fullName:'Admin User', roles:['Admin'], status:'Active' }]); });
 app.get('/api/officials', (req,res)=>{ res.json([{ officialId:'O1', fullName:'Punong Barangay', position:'Punong Barangay', termStart:'2023', termEnd:'2026', status:'Active' }]); });

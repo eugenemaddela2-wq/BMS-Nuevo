@@ -114,10 +114,14 @@ async function seedTestUsers() {
                             [newUser.id, user.firstName, user.lastName, user.dateOfBirth, user.purok, user.phoneNumber]
                         );
                     } else if (user.role === 'official') {
+                        const termStart = new Date();
+                        const termEnd = new Date();
+                        termEnd.setFullYear(termEnd.getFullYear() + 3);
+                        
                         await client.query(
-                            `INSERT INTO officials (user_id, first_name, last_name, position, office, phone_number, created_at)
-                             VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
-                            [newUser.id, user.firstName, user.lastName, 'Barangay Official', 'Official Office', user.phoneNumber]
+                            `INSERT INTO officials (user_id, first_name, last_name, position, term_start, term_end, status, created_at)
+                             VALUES ($1, $2, $3, $4, $5, $6, 'active', NOW())`,
+                            [newUser.id, user.firstName, user.lastName, 'Barangay Official', termStart, termEnd]
                         );
                     }
 
