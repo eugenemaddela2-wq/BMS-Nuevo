@@ -11,7 +11,7 @@ const officialDashboard = {
 
 // API Configuration
 const API_CONFIG = {
-    BASE_URL: 'http://localhost:3000/api',
+    BASE_URL: '/api',  // Use relative path for API calls
     ENDPOINTS: {
         dashboard: '/officials/{id}/dashboard',
         tasks: '/officials/{id}/tasks',
@@ -194,92 +194,237 @@ function loadSectionData(section) {
 function loadDashboardData() {
     console.log('Loading Dashboard Data...');
     
-    // In a real app, fetch from API
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.dashboard.replace('{id}', officialDashboard.officialId)}`)
-    //     .then(response => response.json())
-    //     .then(data => updateDashboardUI(data))
-    //     .catch(error => console.error('Error loading dashboard:', error));
-    
-    // For now, data is pre-populated in HTML
+    // Load all dashboard data in parallel
+    Promise.all([
+        makeAPIRequest('/api/complaints'),
+        makeAPIRequest('/api/residents'),
+        makeAPIRequest('/api/events'),
+        makeAPIRequest('/api/announcements')
+    ]).then(([complaints, residents, events, announcements]) => {
+        updateDashboardUI({
+            complaints: complaints || [],
+            residents: residents || [],
+            events: events || [],
+            announcements: announcements || []
+        });
+    }).catch(err => {
+        console.error('Error loading dashboard:', err);
+        showNotification('Failed to load dashboard data', 'error');
+    });
 }
 
 function loadTasksData() {
     console.log('Loading Tasks Data...');
-    
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.tasks.replace('{id}', officialDashboard.officialId)}`)
-    //     .then(response => response.json())
-    //     .then(data => updateTasksUI(data))
-    //     .catch(error => console.error('Error loading tasks:', error));
+    // Tasks would typically come from a combined view of complaints and approvals
+    // For now, using the mock data pre-populated in HTML
 }
 
 function loadComplaintsData() {
     console.log('Loading Complaints Data...');
     
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.complaints}?status=all`)
-    //     .then(response => response.json())
-    //     .then(data => updateComplaintsUI(data))
-    //     .catch(error => console.error('Error loading complaints:', error));
+    makeAPIRequest('/api/complaints')
+        .then(complaints => {
+            updateComplaintsUI(complaints || []);
+        })
+        .catch(err => {
+            console.error('Error loading complaints:', err);
+            showNotification('Failed to load complaints', 'error');
+        });
 }
 
 function loadApprovalsData() {
     console.log('Loading Approvals Data...');
-    
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.documents}`)
-    //     .then(response => response.json())
-    //     .then(data => updateApprovalsUI(data))
-    //     .catch(error => console.error('Error loading approvals:', error));
+    // Would need a dedicated approvals endpoint
+    // For now, using pre-populated HTML data
 }
 
 function loadResidentsData() {
     console.log('Loading Residents Data...');
     
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.residents}`)
-    //     .then(response => response.json())
-    //     .then(data => updateResidentsUI(data))
-    //     .catch(error => console.error('Error loading residents:', error));
+    makeAPIRequest('/api/residents')
+        .then(residents => {
+            updateResidentsUI(residents || []);
+        })
+        .catch(err => {
+            console.error('Error loading residents:', err);
+            showNotification('Failed to load residents', 'error');
+        });
 }
 
 function loadAnnouncementsData() {
     console.log('Loading Announcements Data...');
     
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.announcements}`)
-    //     .then(response => response.json())
-    //     .then(data => updateAnnouncementsUI(data))
-    //     .catch(error => console.error('Error loading announcements:', error));
+    makeAPIRequest('/api/announcements')
+        .then(announcements => {
+            updateAnnouncementsUI(announcements || []);
+        })
+        .catch(err => {
+            console.error('Error loading announcements:', err);
+            showNotification('Failed to load announcements', 'error');
+        });
 }
 
 function loadCalendarData() {
     console.log('Loading Calendar Data...');
     
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.events}`)
-    //     .then(response => response.json())
-    //     .then(data => updateCalendarUI(data))
-    //     .catch(error => console.error('Error loading calendar:', error));
+    makeAPIRequest('/api/events')
+        .then(events => {
+            updateCalendarUI(events || []);
+        })
+        .catch(err => {
+            console.error('Error loading calendar:', err);
+            showNotification('Failed to load events', 'error');
+        });
 }
 
 function loadReportsData() {
     console.log('Loading Reports Data...');
-    
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.reports.replace('{id}', officialDashboard.officialId)}`)
-    //     .then(response => response.json())
-    //     .then(data => updateReportsUI(data))
-    //     .catch(error => console.error('Error loading reports:', error));
+    // Reports data typically generated from aggregate queries
+    // Using pre-populated HTML for now
 }
 
 function loadDocumentsData() {
     console.log('Loading Documents Data...');
-    
-    // Documents are typically static files served from a server
-    // Files would include: Oath of Office, Appointment Letter, Official ID, Templates
+    // Documents are typically static
 }
 
 function loadAuditTrailData() {
     console.log('Loading Audit Trail Data...');
     
-    // fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.auditLogs}?officialId=${officialDashboard.officialId}`)
-    //     .then(response => response.json())
-    //     .then(data => updateAuditUI(data))
-    //     .catch(error => console.error('Error loading audit trail:', error));
+    makeAPIRequest('/api/audit-logs')
+        .then(logs => {
+            updateAuditUI(logs || []);
+        })
+        .catch(err => {
+            console.error('Error loading audit trail:', err);
+            showNotification('Failed to load audit logs', 'error');
+        });
+}
+
+// ==================== UPDATE UI FUNCTIONS ====================
+function updateDashboardUI(data) {
+    console.log('Updating Dashboard UI with data:', data);
+    // Dashboard summary cards are already in HTML, this is where we'd update them
+    // with real data from the API
+}
+
+function updateComplaintsUI(complaints) {
+    const tbody = document.querySelector('#complaints .data-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    complaints.forEach(complaint => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${complaint.ref || complaint.id}</td>
+            <td>${complaint.category || 'General'}</td>
+            <td>${complaint.title || complaint.complainantName || 'N/A'}</td>
+            <td>${complaint.complainantName || 'N/A'}</td>
+            <td>${new Date(complaint.dateReported).toLocaleDateString()}</td>
+            <td><span class="badge status-${complaint.status?.toLowerCase() || 'pending'}">${complaint.status || 'Pending'}</span></td>
+            <td class="action-cell">
+                <button class="action-btn-small">View</button>
+                <button class="action-btn-small">Update</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function updateResidentsUI(residents) {
+    const tbody = document.querySelector('#residents .data-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    residents.forEach(resident => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${resident.firstName} ${resident.lastName}</td>
+            <td>${resident.purok || 'N/A'}</td>
+            <td>${resident.contact_number || resident.contact || 'N/A'}</td>
+            <td>${resident.status === 'Head' ? 'Yes' : 'No'}</td>
+            <td><span class="badge status-active">${resident.status || 'Active'}</span></td>
+            <td>None</td>
+            <td class="action-cell">
+                <button class="action-btn-small">View Profile</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function updateAnnouncementsUI(announcements) {
+    const container = document.querySelector('#announcements .announcements-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    announcements.forEach(announcement => {
+        const card = document.createElement('div');
+        card.className = 'announcement-card';
+        card.innerHTML = `
+            <div class="announcement-header">
+                <h3>${announcement.title}</h3>
+                <span class="badge status-info">${announcement.status || 'Published'}</span>
+            </div>
+            <p class="announcement-content">${announcement.content || 'No content available'}</p>
+            <div class="announcement-meta">
+                <span>Published: ${new Date(announcement.start).toLocaleDateString()}</span>
+            </div>
+            <div class="announcement-actions">
+                <button class="action-btn-small">Edit</button>
+                <button class="action-btn-small">Unpublish</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function updateCalendarUI(events) {
+    const container = document.querySelector('#calendar .events-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    events.forEach(event => {
+        const card = document.createElement('div');
+        card.className = 'event-card';
+        card.innerHTML = `
+            <div class="event-date">${new Date(event.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+            <div class="event-content">
+                <h4>${event.title || 'Event'}</h4>
+                <p class="event-time">⏰ ${event.start ? new Date(event.start).toLocaleTimeString() : 'TBD'}</p>
+                <p class="event-description">${event.description || event.venue || 'Event details'}</p>
+                <div class="event-rsvp">
+                    <span class="rsvp-count">Event by: ${event.organizer || 'Barangay'}</span>
+                </div>
+            </div>
+            <div class="event-actions">
+                <button class="action-btn">View Details</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function updateAuditUI(logs) {
+    const tbody = document.querySelector('#audit .data-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${new Date(log.timestamp).toLocaleString()}</td>
+            <td>${log.actionType || log.action || 'N/A'}</td>
+            <td>${log.targetId || log.resourceId || 'N/A'}</td>
+            <td>${log.details?.description || log.details || 'N/A'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 // ==================== ACTION BUTTON HANDLERS ====================
@@ -602,15 +747,23 @@ async function makeAPIRequest(endpoint, method = 'GET', data = null) {
             method,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${officialDashboard.authToken}`
             }
         };
+
+        // Add auth token if available
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('accessToken');
+        if (token) {
+            options.headers['Authorization'] = `Bearer ${token}`;
+        }
 
         if (data && (method === 'POST' || method === 'PATCH')) {
             options.body = JSON.stringify(data);
         }
 
-        const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, options);
+        // Use full URL if endpoint starts with http, otherwise prepend /api
+        const url = endpoint.startsWith('http') ? endpoint : `/api${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+        
+        const response = await fetch(url, options);
 
         if (!response.ok) {
             if (response.status === 401) {
