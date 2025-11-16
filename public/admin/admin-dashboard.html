@@ -12,7 +12,11 @@
       <img src="/public/admin/logo.png" alt="Barangay Logo" class="logo" onerror="this.style.display='none'"/>
       <div class="title">BARANGAY MANAGEMENT SYSTEM — ADMIN</div>
     </div>
-    <div class="center">Admin Dashboard — <span id="adminName">[AdminName]</span></div>
+    <div class="center">Admin Dashboard — <span id="adminName">[AdminName]</span>
+      <div style="font-size: 11px; color: #666; margin-top: 4px;">
+        <span data-clock>00:00:00 AM</span> | <span data-date>Loading...</span>
+      </div>
+    </div>
     <div class="right">
       <button class="icon-btn" id="btnNotifications" aria-label="Notifications">🔔<span class="badge" id="notifCount">0</span></button>
       <button class="icon-btn" id="btnMessages" aria-label="Messages">✉️<span class="badge" id="msgCount">0</span></button>
@@ -29,6 +33,11 @@
 
   <div class="layout">
     <nav class="sidebar" role="navigation">
+      <div style="padding: 15px; text-align: center; border-bottom: 1px solid #ddd; font-size: 11px;">
+        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Live Clock</div>
+        <div style="font-size: 13px; color: #0066cc; font-weight: bold;" data-clock>00:00:00 AM</div>
+        <div style="font-size: 10px; color: #666; margin-top: 4px;" data-date>Loading...</div>
+      </div>
       <ul>
         <li data-section="overview" class="active">Overview</li>
         <li data-section="pending">Pending Queue</li>
@@ -41,8 +50,10 @@
         <li data-section="users">Manage Users</li>
         <li data-section="officials">Manage Officials</li>
         <li data-section="complaints">Manage Complaints</li>
+        <li data-section="documents">Manage Documents</li>
         <li data-section="auditlogs">Manage Audit Logs</li>
         <li data-section="imports">Import Data</li>
+        <li data-section="exportdata">Export Data</li>
       </ul>
     </nav>
 
@@ -144,17 +155,6 @@
         </div>
       </section>
 
-      <!-- Exports -->
-      <section id="exports" class="panel" hidden>
-        <h2>Reports & Exports</h2>
-        <div class="card">
-          <button id="btnRequestExport" class="btn primary">Request New Export</button>
-          <div id="exportHistory">
-            <table class="data-table" id="exportTable"><thead><tr><th>ExportID</th><th>Dataset</th><th>Format</th><th>Records</th><th>Status</th><th>RequestedAt</th><th>Actions</th></tr></thead><tbody></tbody></table>
-          </div>
-        </div>
-      </section>
-
       <!-- Management Panels (skeletons) -->
       <section id="residents" class="panel" hidden>
         <h2>Manage Residents</h2>
@@ -210,6 +210,49 @@
         </div>
       </section>
 
+      <section id="documents" class="panel" hidden>
+        <h2>Manage Documents</h2>
+        <div class="controls-top">
+          <input id="docSearch" placeholder="Search by resident name or reference..." />
+          <select id="docStatusFilter">
+            <option value="">All Status</option>
+            <option value="pending">Pending Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="ready">Ready for Pickup</option>
+          </select>
+          <select id="docTypeFilter">
+            <option value="">All Document Types</option>
+            <option value="barangay_clearance">Barangay Clearance</option>
+            <option value="residency">Residency Certificate</option>
+            <option value="business_permit">Business Permit</option>
+            <option value="indigent">Indigent Certificate</option>
+            <option value="solo_parent">Solo Parent ID</option>
+            <option value="certif_good_moral">Certificate of Good Moral</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="documentsTable">
+            <thead>
+              <tr>
+                <th>Ref ID</th>
+                <th>Resident Name</th>
+                <th>Document Type</th>
+                <th>Requested Date</th>
+                <th>Status</th>
+                <th>Requested By</th>
+                <th>Approved By</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="pagination" id="docPagination"></div>
+        </div>
+      </section>
+
       <section id="auditlogs" class="panel" hidden>
         <h2>Manage Audit Logs</h2>
         <div class="table-wrap">
@@ -229,6 +272,126 @@
             <button class="btn" id="btnUpload">Upload & Validate</button>
           </form>
           <div id="importPreview"></div>
+        </div>
+      </section>
+
+      <section id="exportdata" class="panel" hidden>
+        <h2>Export Data</h2>
+        <div class="card">
+          <div class="export-controls">
+            <h3>Export Options</h3>
+            <form id="exportForm">
+              <div class="form-row">
+                <label>
+                  Select Dataset to Export:
+                  <select id="exportDataset" required>
+                    <option value="">-- Choose Dataset --</option>
+                    <option value="residents">Residents</option>
+                    <option value="events">Events</option>
+                    <option value="announcements">Announcements</option>
+                    <option value="officials">Officials</option>
+                    <option value="complaints">Complaints</option>
+                    <option value="documents">Documents</option>
+                    <option value="audit_logs">Audit Logs</option>
+                    <option value="users">Users</option>
+                    <option value="all">All Data (Complete Backup)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  Export Format:
+                  <select id="exportFormat" required>
+                    <option value="csv">CSV (Comma-Separated Values)</option>
+                    <option value="xlsx">Excel (.xlsx)</option>
+                    <option value="json">JSON (JavaScript Object Notation)</option>
+                    <option value="pdf">PDF Report</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  Date Range (Optional):
+                  <input type="date" id="exportStartDate" />
+                  to
+                  <input type="date" id="exportEndDate" />
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  <input type="checkbox" id="exportIncludeArchived" />
+                  Include Archived Records
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  <input type="checkbox" id="exportEncrypt" />
+                  Encrypt File (Recommended for Sensitive Data)
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn primary" id="btnExport">
+                  📥 Generate & Download Export
+                </button>
+                <button type="reset" class="btn secondary">Reset Form</button>
+              </div>
+            </form>
+          </div>
+
+          <hr class="divider" />
+
+          <div class="export-history">
+            <h3>Recent Exports</h3>
+            <div class="controls">
+              <input type="search" id="exportSearch" placeholder="Search exports by dataset or date..." />
+              <select id="exportStatusFilter">
+                <option value="">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table" id="exportHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Export ID</th>
+                    <th>Dataset</th>
+                    <th>Format</th>
+                    <th>Records</th>
+                    <th>Size</th>
+                    <th>Created By</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="exportHistoryBody">
+                  <tr>
+                    <td colspan="9" class="text-center text-muted">No exports yet. Generate your first export above.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="export-info" style="margin-top: 20px; padding: 15px; background-color: #f0f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
+            <h4>ℹ️ Export Information</h4>
+            <ul>
+              <li><strong>CSV Format:</strong> Best for spreadsheet applications (Excel, Google Sheets)</li>
+              <li><strong>Excel Format:</strong> Formatted spreadsheets with multiple sheets</li>
+              <li><strong>JSON Format:</strong> Best for data import to other systems or databases</li>
+              <li><strong>PDF Format:</strong> Professional reports suitable for printing and archiving</li>
+              <li><strong>Encryption:</strong> Protects sensitive data during transmission and storage</li>
+              <li><strong>Date Range:</strong> Leave empty to export all records</li>
+              <li><strong>Archived Records:</strong> Include deleted/inactive records if checked</li>
+            </ul>
+          </div>
         </div>
       </section>
 

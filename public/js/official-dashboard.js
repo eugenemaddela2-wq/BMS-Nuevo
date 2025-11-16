@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeDashboard();
     setupEventListeners();
     loadDashboardData();
+    startRealTimeClock();
+    startLiveDataUpdates();
 });
 
 function initializeDashboard() {
@@ -613,4 +615,77 @@ window.officialDashboard = {
     getActiveSectionName
 };
 
-console.log('Official Dashboard JavaScript Loaded');
+/**
+ * Real-Time Clock Updates
+ */
+function startRealTimeClock() {
+    updateClockDisplay();
+    setInterval(updateClockDisplay, 1000);
+}
+
+function updateClockDisplay() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    const dateString = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    // Update all clock displays
+    const clockElements = document.querySelectorAll('[data-clock]');
+    clockElements.forEach(el => {
+        el.textContent = timeString;
+    });
+    
+    const dateElements = document.querySelectorAll('[data-date]');
+    dateElements.forEach(el => {
+        el.textContent = dateString;
+    });
+}
+
+/**
+ * Live Data Updates - Refresh every 30 seconds
+ */
+function startLiveDataUpdates() {
+    setInterval(() => {
+        const activeSection = officialDashboard.currentSection || 'dashboard';
+        loadSectionData(activeSection);
+        updateLiveCalendar();
+    }, 30000);
+}
+
+/**
+ * Update Live Calendar
+ */
+function updateLiveCalendar() {
+    const today = new Date();
+    const calendarDays = document.querySelectorAll('.calendar-day');
+    
+    calendarDays.forEach(day => {
+        day.classList.remove('today');
+        const dayNum = parseInt(day.textContent);
+        if (dayNum === today.getDate() && !day.classList.contains('empty')) {
+            day.classList.add('today');
+            day.style.backgroundColor = '#667eea';
+            day.style.color = 'white';
+            day.style.fontWeight = 'bold';
+        }
+    });
+    
+    // Update calendar month/year
+    const monthYear = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const calendarMonthEls = document.querySelectorAll('.calendar-header span');
+    calendarMonthEls.forEach(el => {
+        if (!el.textContent.includes('<') && !el.textContent.includes('>')) {
+            el.textContent = monthYear;
+        }
+    });
+}\n\nconsole.log('Official Dashboard JavaScript Loaded');

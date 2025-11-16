@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeDashboard();
     setupEventListeners();
     loadDashboardData();
+    startRealTimeClock();
+    startLiveDataUpdates();
 });
 
 /**
@@ -416,6 +418,7 @@ async function loadEventsData() {
         if (response.ok) {
             const events = await response.json();
             // Update events list with real data
+            updateLiveCalendar();
         }
     } catch (error) {
         console.error('Events loading error:', error);
@@ -646,6 +649,116 @@ async function updateComplaintStatus(complaintId, status) {
     }
 }
 
+/**
+ * Real-Time Clock Updates
+ */
+function startRealTimeClock() {
+    // Update clock every second
+    updateClockDisplay();
+    setInterval(updateClockDisplay, 1000);
+}
+
+function updateClockDisplay() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    const dateString = now.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    // Update all clock displays if they exist
+    const clockElements = document.querySelectorAll('[data-clock]');
+    clockElements.forEach(el => {
+        el.textContent = timeString;
+    });
+    
+    const dateElements = document.querySelectorAll('[data-date]');
+    dateElements.forEach(el => {
+        el.textContent = dateString;
+    });
+}
+
+/**
+ * Live Data Updates - Refresh data periodically
+ */
+function startLiveDataUpdates() {
+    // Refresh dashboard data every 30 seconds
+    setInterval(() => {
+        const activeSection = getActiveSectionName();
+        loadSectionData(activeSection);
+        updateLiveActivityFeed();
+        updateLiveCalendar();
+    }, 30000);
+}
+
+/**
+ * Update Live Calendar
+ */
+function updateLiveCalendar() {
+    const today = new Date();
+    const calendarDays = document.querySelectorAll('.calendar-day');
+    
+    calendarDays.forEach(day => {
+        day.classList.remove('today');
+        const dayNum = parseInt(day.textContent);
+        if (dayNum === today.getDate() && !day.classList.contains('empty')) {
+            day.classList.add('today');
+            day.style.backgroundColor = '#0066cc';
+            day.style.color = 'white';
+            day.style.fontWeight = 'bold';
+        }
+    });
+    
+    // Update calendar month/year
+    const monthYear = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const calendarMonthEl = document.getElementById('calendarMonth');
+    if (calendarMonthEl) {
+        calendarMonthEl.textContent = monthYear;
+    }
+}
+
+/**
+ * Update Live Activity Feed
+ */
+async function updateLiveActivityFeed() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/residents/${RESIDENT_ID}/activity-feed`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+        
+        if (response.ok) {
+            const activities = await response.json();
+            updateActivityTimeline(activities);
+        }
+    } catch (error) {
+        console.error('Activity feed update error:', error);
+    }
+}
+
+/**
+ * Update Activity Timeline with Latest Data
+ */
+function updateActivityTimeline(activities) {
+    const timeline = document.querySelector('.timeline');
+    if (!timeline) return;
+    
+    // Keep most recent 5 items
+    const items = timeline.querySelectorAll('.timeline-item');
+    if (items.length > 5) {
+        items[items.length - 1].remove();
+    }
+}
+
 // Export functions for use in HTML
 window.openModal = openModal;
 window.closeModal = closeModal;
@@ -657,4 +770,8 @@ window.openAnnouncement = openAnnouncement;
 window.logout = logout;
 window.toggleFAQ = (element) => {
     element.closest('.faq-item').classList.toggle('open');
+};
+window.updateClockDisplay = updateClockDisplay;
+window.startRealTimeClock = startRealTimeClock;
+window.startLiveDataUpdates = startLiveDataUpdates;
 };

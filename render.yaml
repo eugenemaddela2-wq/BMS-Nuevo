@@ -1,0 +1,32 @@
+# Render Configuration for BMS-Nuevo
+
+services:
+  - type: web
+    name: bms-nuevo
+    env: node
+    plan: starter  # Change to standard or pro for production
+    buildCommand: npm install
+    startCommand: npm start
+    regions:
+      - singapore  # Change to your preferred region
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        sync: false  # Set via dashboard
+      - key: JWT_SECRET
+        sync: false  # Set via dashboard
+      - key: REACT_APP_API_URL
+        sync: false  # Will be auto-populated
+      - key: ALLOW_DEV_ROUTES
+        value: "false"
+
+  # Optional: Add PostgreSQL service (uncomment to use Render's managed database)
+  # - type: pserv
+  #   name: bms-db
+  #   plan: starter
+  #   region: singapore
+  #   ipAllowList:
+  #     - dest: 10.0.0.0/8

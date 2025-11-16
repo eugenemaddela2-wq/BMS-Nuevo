@@ -630,3 +630,358 @@ html, body{
   outline: 3px solid rgba(var(--color-primary-rgb), 0.25);
   outline-offset: 2px;
 }
+
+/* ===================================================================
+   EXPORT DATA SECTION STYLES
+=================================================================== */
+
+.export-controls {
+  margin-bottom: 2rem;
+}
+
+.export-controls h3 {
+  font-size: 1.2rem;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+#exportForm {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.form-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  flex: 1;
+  min-width: 280px;
+}
+
+.form-row input[type="date"],
+.form-row input[type="checkbox"],
+.form-row select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.form-row input[type="date"]:focus,
+.form-row select:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
+}
+
+.form-row input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.form-row select {
+  min-width: 200px;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+}
+
+.form-row input[type="date"] {
+  min-width: 140px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.form-actions .btn {
+  flex: 1;
+  max-width: 300px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.form-actions .btn.primary {
+  background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+  color: white;
+}
+
+.form-actions .btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.form-actions .btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-actions .btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  margin: 2rem 0;
+}
+
+.export-history {
+  margin-top: 2rem;
+}
+
+.export-history h3 {
+  font-size: 1.2rem;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.export-history .controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.export-history .controls input,
+.export-history .controls select {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.6rem 1rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.export-history .controls input:focus,
+.export-history .controls select:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.15);
+}
+
+#exportHistoryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+#exportHistoryTable thead {
+  background: rgba(102, 126, 234, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#exportHistoryTable th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+#exportHistoryTable tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
+}
+
+#exportHistoryTable tbody tr:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+#exportHistoryTable td {
+  padding: 0.75rem;
+  color: var(--text);
+}
+
+#exportHistoryTable td.text-center {
+  text-align: center;
+}
+
+#exportHistoryTable td.text-muted {
+  color: var(--muted);
+}
+
+.export-info {
+  border-radius: 0.5rem;
+  line-height: 1.6;
+}
+
+.export-info h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.export-info ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-position: outside;
+}
+
+.export-info li {
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.export-info strong {
+  color: var(--accent);
+}
+
+/* ===================================================================
+   MANAGE DOCUMENTS SECTION STYLES
+=================================================================== */
+
+.controls-top {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.controls-top input,
+.controls-top select {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.6rem 1rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.controls-top input:focus,
+.controls-top select:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.15);
+}
+
+#documentsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+#documentsTable thead {
+  background: rgba(102, 126, 234, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#documentsTable th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+#documentsTable tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
+}
+
+#documentsTable tbody tr:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+#documentsTable td {
+  padding: 0.75rem;
+  color: var(--text);
+}
+
+#documentsTable td button {
+  margin-right: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+#documentsTable td button.warn {
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+#documentsTable td button.warn:hover {
+  background: rgba(255, 107, 107, 0.3);
+  border-color: rgba(255, 107, 107, 0.5);
+}
+
+.pagination {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pagination button.active {
+  background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+  color: white;
+  border-color: transparent;
+}
+
+/* ===================================================================
+   REAL-TIME CALENDAR STYLES
+=================================================================== */
+.calendar-day.today {
+  background: linear-gradient(135deg, var(--primary-start), var(--primary-end)) !important;
+  color: white !important;
+  font-weight: bold !important;
+  box-shadow: 0 0 16px rgba(102, 126, 234, 0.4);
+  animation: pulse-calendar 2s infinite;
+}
+
+@keyframes pulse-calendar {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(102, 126, 234, 0.8);
+  }
+}

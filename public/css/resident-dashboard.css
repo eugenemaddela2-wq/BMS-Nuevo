@@ -1271,6 +1271,23 @@ html, body {
     margin-top: 0.2rem;
 }
 
+.calendar-day.today {
+    background: #0066cc !important;
+    color: white !important;
+    font-weight: bold !important;
+    box-shadow: 0 0 12px rgba(0, 102, 204, 0.4);
+    animation: pulse-today 2s infinite;
+}
+
+@keyframes pulse-today {
+    0%, 100% {
+        box-shadow: 0 0 12px rgba(0, 102, 204, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 102, 204, 0.8);
+    }
+}
+
 /* ============================================================
    ANNOUNCEMENTS
 ============================================================ */

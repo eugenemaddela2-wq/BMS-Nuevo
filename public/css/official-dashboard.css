@@ -975,6 +975,16 @@ body {
     color: white;
     font-weight: 800;
     box-shadow: 0 10px 30px rgba(var(--color-primary-rgb), 0.12);
+    animation: pulse-today 2s infinite;
+}
+
+@keyframes pulse-today {
+    0%, 100% {
+        box-shadow: 0 10px 30px rgba(var(--color-primary-rgb), 0.12);
+    }
+    50% {
+        box-shadow: 0 10px 40px rgba(var(--color-primary-rgb), 0.3);
+    }
 }
 
 .calendar-day.has-event::after {
