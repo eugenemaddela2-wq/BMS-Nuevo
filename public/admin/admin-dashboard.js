@@ -58,6 +58,13 @@
         this.el.profileDropdown.hidden = !this.el.profileDropdown.hidden;
       });
 
+      // Sidebar Profile and Sign Out buttons
+      const sidebarProfileBtn = document.getElementById('sidebarProfileBtn');
+      if(sidebarProfileBtn) sidebarProfileBtn.addEventListener('click', ()=>this.handleProfileClick());
+
+      const sidebarSignOutBtn = document.getElementById('sidebarSignOutBtn');
+      if(sidebarSignOutBtn) sidebarSignOutBtn.addEventListener('click', ()=>this.handleSignOut());
+
       document.getElementById('pendingCategoryFilter').addEventListener('change', (e)=>this.loadPending(e.target.value));
       document.getElementById('pendingSearch').addEventListener('input', (e)=>this.filterPending(e.target.value));
 
@@ -312,6 +319,12 @@
         if(p) this.showNotification('Import started','success');
         this.loadImports();
       });
+    },
+
+    handleProfileClick(){
+      // Show profile section or alert
+      alert('Profile functionality coming soon');
+      // You can replace this with navigateTo('profile') if you add a profile section
     },
 
     async handleSignOut(){

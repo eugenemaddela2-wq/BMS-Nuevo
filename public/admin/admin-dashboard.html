@@ -54,6 +54,10 @@
         <li data-section="imports">Import Data</li>
         <li data-section="exportdata">Export Data</li>
       </ul>
+      <div style="border-top: 1px solid #ddd; padding: 15px; margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+        <button id="sidebarProfileBtn" style="padding: 10px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">👤 Profile</button>
+        <button id="sidebarSignOutBtn" style="padding: 10px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">🚪 Sign Out</button>
+      </div>
     </nav>
 
     <main class="content">
@@ -104,6 +108,15 @@
             </div>
           </div>
 
+          <div class="card summary-card" id="cardExports">
+            <h3>Reports & Exports</h3>
+            <div class="exports-actions">
+              <button id="btnNewExport" class="btn primary">Generate Report</button>
+              <div class="recent-exports" id="recentExports">
+                <!-- recent exports list -->
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -251,7 +264,139 @@
         </div>
       </section>
 
+      <section id="imports" class="panel" hidden>
+        <h2>Import Data</h2>
+        <div class="card">
+          <form id="importForm">
+            <label>Dataset
+              <select id="importDataset"><option value="residents">Residents</option><option value="events">Events</option><option value="officials">Officials</option></select>
+            </label>
+            <label>File<input type="file" id="importFile" accept=".csv,.xlsx,.json" /></label>
+            <button class="btn" id="btnUpload">Upload & Validate</button>
+          </form>
+          <div id="importPreview"></div>
+        </div>
+      </section>
 
+      <section id="exportdata" class="panel" hidden>
+        <h2>Export Data</h2>
+        <div class="card">
+          <div class="export-controls">
+            <h3>Export Options</h3>
+            <form id="exportForm">
+              <div class="form-row">
+                <label>
+                  Select Dataset to Export:
+                  <select id="exportDataset" required>
+                    <option value="">-- Choose Dataset --</option>
+                    <option value="residents">Residents</option>
+                    <option value="events">Events</option>
+                    <option value="announcements">Announcements</option>
+                    <option value="officials">Officials</option>
+                    <option value="complaints">Complaints</option>
+                    <option value="documents">Documents</option>
+                    <option value="audit_logs">Audit Logs</option>
+                    <option value="users">Users</option>
+                    <option value="all">All Data (Complete Backup)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  Export Format:
+                  <select id="exportFormat" required>
+                    <option value="csv">CSV (Comma-Separated Values)</option>
+                    <option value="xlsx">Excel (.xlsx)</option>
+                    <option value="json">JSON (JavaScript Object Notation)</option>
+                    <option value="pdf">PDF Report</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  Date Range (Optional):
+                  <input type="date" id="exportStartDate" />
+                  to
+                  <input type="date" id="exportEndDate" />
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  <input type="checkbox" id="exportIncludeArchived" />
+                  Include Archived Records
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  <input type="checkbox" id="exportEncrypt" />
+                  Encrypt File (Recommended for Sensitive Data)
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn primary" id="btnExport">
+                  📥 Generate & Download Export
+                </button>
+                <button type="reset" class="btn secondary">Reset Form</button>
+              </div>
+            </form>
+          </div>
+
+          <hr class="divider" />
+
+          <div class="export-history">
+            <h3>Recent Exports</h3>
+            <div class="controls">
+              <input type="search" id="exportSearch" placeholder="Search exports by dataset or date..." />
+              <select id="exportStatusFilter">
+                <option value="">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table" id="exportHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Export ID</th>
+                    <th>Dataset</th>
+                    <th>Format</th>
+                    <th>Records</th>
+                    <th>Size</th>
+                    <th>Created By</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="exportHistoryBody">
+                  <tr>
+                    <td colspan="9" class="text-center text-muted">No exports yet. Generate your first export above.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="export-info" style="margin-top: 20px; padding: 15px; background-color: #f0f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
+            <h4>ℹ️ Export Information</h4>
+            <ul>
+              <li><strong>CSV Format:</strong> Best for spreadsheet applications (Excel, Google Sheets)</li>
+              <li><strong>Excel Format:</strong> Formatted spreadsheets with multiple sheets</li>
+              <li><strong>JSON Format:</strong> Best for data import to other systems or databases</li>
+              <li><strong>PDF Format:</strong> Professional reports suitable for printing and archiving</li>
+              <li><strong>Encryption:</strong> Protects sensitive data during transmission and storage</li>
+              <li><strong>Date Range:</strong> Leave empty to export all records</li>
+              <li><strong>Archived Records:</strong> Include deleted/inactive records if checked</li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
     </main>
   </div>
