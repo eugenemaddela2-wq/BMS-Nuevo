@@ -1177,4 +1177,6 @@ function updateLiveCalendar() {
             el.textContent = monthYear;
         }
     });
-}\n\nconsole.log('Official Dashboard JavaScript Loaded');
+}
+
+console.log('Official Dashboard JavaScript Loaded');
