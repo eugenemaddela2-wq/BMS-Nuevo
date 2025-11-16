@@ -154,31 +154,37 @@ async function seedTestUsers() {
             phoneNumber: '09987654321',
             purok: 'Zone 4',
             role: 'admin',
-            status: 'active'
+            status: 'active',
+            verified: true,
+            lastLogin: new Date()
         },
         {
             username: 'official1',
             email: 'official@bms.local',
-            password: 'password',
-            firstName: 'Official',
-            lastName: 'Officer',
+            password: 'Official@123',
+            firstName: 'Maria',
+            lastName: 'Santos',
             dateOfBirth: '1992-03-15',
             phoneNumber: '09234567890',
             purok: 'Zone 1',
             role: 'official',
-            status: 'active'
+            status: 'active',
+            verified: true,
+            lastLogin: null
         },
         {
             username: 'resident1',
             email: 'resident@bms.local',
-            password: 'password',
-            firstName: 'Resident',
-            lastName: 'User',
+            password: 'Resident@123',
+            firstName: 'Juan',
+            lastName: 'dela Cruz',
             dateOfBirth: '1995-06-20',
             phoneNumber: '09345678901',
             purok: 'Purok 1',
             role: 'resident',
-            status: 'active'
+            status: 'active',
+            verified: true,
+            lastLogin: null
         }
     ];
 
