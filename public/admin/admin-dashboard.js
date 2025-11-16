@@ -42,20 +42,12 @@
         auditSnapshot: document.querySelector('#auditSnapshot tbody'),
         sessionsPanel: document.getElementById('sessionsPanel'),
         recentExports: document.getElementById('recentExports'),
-        profileMenu: document.getElementById('profileMenu'),
-        profileDropdown: document.getElementById('profileDropdown')
       };
     },
     bind(){
       // sidebar navigation
       this.el.sidebarItems.forEach(item=>{
         item.addEventListener('click', ()=>this.navigateTo(item.dataset.section));
-      });
-
-      // profile dropdown
-      const profile = document.querySelector('.profile');
-      profile.addEventListener('click', ()=>{
-        this.el.profileDropdown.hidden = !this.el.profileDropdown.hidden;
       });
 
       // Sidebar Profile and Sign Out buttons
@@ -112,10 +104,6 @@
           this.filterDocuments(query, statusFilter, e.target.value);
         });
       }
-
-      // sign out
-      const signOut = document.getElementById('signOut');
-      if(signOut) signOut.addEventListener('click', ()=>this.handleSignOut());
     },
     setAdminName(){
       const name = localStorage.getItem('adminName') || this.adminName;
