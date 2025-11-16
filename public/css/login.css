@@ -537,7 +537,7 @@ h2 {
 .hidden { display: none; }
 .mt-18 { margin-top: 18px; }
 .mt-16 { margin-top: 16px; }
-.mt-12 { margin-top: 12px; }
+.mt-12 { margin-top: 12px; text-align: center; }
 .mt-8 { margin-top: 8px; }
 .mb-12 { margin-bottom: 12px; }
 .mb-16 { margin-bottom: 16px; }
