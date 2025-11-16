@@ -656,5 +656,11 @@
   adminDashboard.updateClockDisplay = updateClockDisplay;
   adminDashboard.updateLiveCalendar = updateLiveCalendar;
   
-  document.addEventListener('DOMContentLoaded', ()=>adminDashboard.init());
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Check authentication first
+    const isAuth = await redirectIfNotAuthenticated();
+    if (!isAuth) return;
+    
+    adminDashboard.init();
+  });
 })();

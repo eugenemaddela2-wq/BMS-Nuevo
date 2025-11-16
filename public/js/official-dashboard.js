@@ -26,7 +26,11 @@ const API_CONFIG = {
 };
 
 // ==================== INITIALIZATION ====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check authentication first
+    const isAuth = await redirectIfNotAuthenticated();
+    if (!isAuth) return;
+    
     initializeDashboard();
     setupEventListeners();
     loadDashboardData();

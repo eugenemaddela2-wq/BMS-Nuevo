@@ -8,7 +8,11 @@ const API_BASE_URL = '/api';
 const RESIDENT_ID = localStorage.getItem('residentId') || '1'; // Get from auth context
 
 // Initialize Dashboard
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check authentication first
+    const isAuth = await redirectIfNotAuthenticated();
+    if (!isAuth) return;
+    
     initializeDashboard();
     setupEventListeners();
     loadDashboardData();

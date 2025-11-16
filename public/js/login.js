@@ -209,11 +209,15 @@ async function verifySession() {
     }
 }
 
-function saveSession(accessToken, refreshToken) {
+function saveSession(accessToken, refreshToken, userData) {
     session.accessToken = accessToken;
     session.refreshToken = refreshToken;
+    session.user = userData;
     sessionStorage.setItem('accessToken', accessToken);
     sessionStorage.setItem('refreshToken', refreshToken);
+    if (userData) {
+        sessionStorage.setItem('userData', JSON.stringify(userData));
+    }
 }
 
 function clearSession() {
@@ -225,10 +229,12 @@ function clearSession() {
 }
 
 function redirectToDashboard() {
-    if (session.user?.role === 'admin' || session.user?.role === 'clerk') {
+    if (session.user?.role === 'admin' || session.user?.role === 'official' || session.user?.role === 'clerk') {
         window.location.href = '/official-dashboard.html';
-    } else {
+    } else if (session.user?.role === 'resident') {
         window.location.href = '/resident-dashboard.html';
+    } else {
+        window.location.href = '/admin/admin-dashboard.html';
     }
 }
 
@@ -293,7 +299,7 @@ async function performLogin(username, password, rememberMe) {
         });
 
         if (result.success) {
-            saveSession(result.accessToken, result.refreshToken);
+            saveSession(result.accessToken, result.refreshToken, result.user);
             session.user = result.user;
             redirectToDashboard();
         }
