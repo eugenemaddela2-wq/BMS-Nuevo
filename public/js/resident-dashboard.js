@@ -552,8 +552,26 @@ function getActiveSectionName() {
  */
 function logout() {
     if (confirm('Are you sure you want to sign out?')) {
+        // Clear all stored data from both storage systems
         localStorage.removeItem('authToken');
         localStorage.removeItem('residentId');
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('userData');
+
+        // Call logout API if token exists
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('accessToken');
+        if (token) {
+            try {
+                fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                }).catch(err => console.log('Logout API call failed (non-critical):', err));
+            } catch(err) {
+                console.log('Logout API call failed (non-critical):', err);
+            }
+        }
+
         window.location.href = '/login.html';
     }
 }

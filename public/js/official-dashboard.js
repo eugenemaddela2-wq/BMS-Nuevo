@@ -134,19 +134,24 @@ function navigateToSection(sectionName) {
     // Hide all sections
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.remove('active');
+        section.hidden = true;
     });
 
     // Show selected section
     const selectedSection = document.getElementById(sectionName);
     if (selectedSection) {
         selectedSection.classList.add('active');
+        selectedSection.hidden = false;
         officialDashboard.currentSection = sectionName;
         
         // Load section-specific data
         loadSectionData(sectionName);
         
         // Scroll to top
-        document.querySelector('.official-main').scrollTop = 0;
+        const mainContainer = document.querySelector('.official-main');
+        if (mainContainer) {
+            mainContainer.scrollTop = 0;
+        }
     }
 }
 
@@ -532,13 +537,27 @@ function showNotification(message, type = 'info') {
 // ==================== AUTHENTICATION ====================
 function handleLogout() {
     if (confirm('Are you sure you want to sign out?')) {
-        // Clear stored data
+        // Clear all stored data from both storage systems
         localStorage.removeItem('authToken');
         localStorage.removeItem('officialId');
         localStorage.removeItem('officialPosition');
         localStorage.removeItem('officialName');
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('userData');
 
-        // In real app: POST /auth/logout
+        // Call logout API if token exists
+        if (officialDashboard.authToken) {
+            try {
+                fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + officialDashboard.authToken }
+                }).catch(err => console.log('Logout API call failed (non-critical):', err));
+            } catch(err) {
+                console.log('Logout API call failed (non-critical):', err);
+            }
+        }
+
         showNotification('Signed out successfully', 'success');
         
         // Redirect to login after 1 second
