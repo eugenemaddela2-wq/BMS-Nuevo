@@ -1,0 +1,42 @@
+<section id="documents" class="panel" hidden>
+  <h2>Manage Documents</h2>
+  <div class="controls-top">
+    <input id="docSearch" placeholder="Search by resident name or reference..." />
+    <select id="docStatusFilter">
+      <option value="">All Status</option>
+      <option value="pending">Pending Review</option>
+      <option value="approved">Approved</option>
+      <option value="rejected">Rejected</option>
+      <option value="ready">Ready for Pickup</option>
+    </select>
+    <select id="docTypeFilter">
+      <option value="">All Document Types</option>
+      <option value="barangay_clearance">Barangay Clearance</option>
+      <option value="residency">Residency Certificate</option>
+      <option value="business_permit">Business Permit</option>
+      <option value="indigent">Indigent Certificate</option>
+      <option value="solo_parent">Solo Parent ID</option>
+      <option value="certif_good_moral">Certificate of Good Moral</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table" id="documentsTable">
+      <thead>
+        <tr>
+          <th>Ref ID</th>
+          <th>Resident Name</th>
+          <th>Document Type</th>
+          <th>Requested Date</th>
+          <th>Status</th>
+          <th>Requested By</th>
+          <th>Approved By</th>
+          <th>Notes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="pagination" id="docPagination"></div>
+  </div>
+</section>

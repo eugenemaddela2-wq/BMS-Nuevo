@@ -1,0 +1,13 @@
+<section id="imports" class="panel" hidden>
+  <h2>Import Data</h2>
+  <div class="card">
+    <form id="importForm">
+      <label>Dataset
+        <select id="importDataset"><option value="residents">Residents</option><option value="events">Events</option><option value="officials">Officials</option></select>
+      </label>
+      <label>File<input type="file" id="importFile" accept=".csv,.xlsx,.json" /></label>
+      <button class="btn" id="btnUpload">Upload & Validate</button>
+    </form>
+    <div id="importPreview"></div>
+  </div>
+</section>
