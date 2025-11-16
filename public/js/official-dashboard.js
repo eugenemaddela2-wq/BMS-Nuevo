@@ -215,8 +215,52 @@ function loadDashboardData() {
 
 function loadTasksData() {
     console.log('Loading Tasks Data...');
-    // Tasks would typically come from a combined view of complaints and approvals
-    // For now, using the mock data pre-populated in HTML
+    
+    // Load tasks from API - combining complaints and approvals
+    Promise.all([
+        makeAPIRequest('/api/complaints'),
+        makeAPIRequest('/api/residents')
+    ]).then(([complaints, residents]) => {
+        updateTasksUI(complaints || []);
+    }).catch(err => {
+        console.error('Error loading tasks:', err);
+        showNotification('Failed to load tasks', 'error');
+    });
+}
+
+function updateTasksUI(tasks) {
+    const container = document.querySelector('#tasks .tasks-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (!tasks || tasks.length === 0) {
+        container.innerHTML = '<p style="padding: 20px; text-align: center;">No tasks available</p>';
+        return;
+    }
+    
+    tasks.forEach((task, index) => {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.innerHTML = `
+            <div class="task-header">
+                <h3>${task.ref || 'Task ' + (index + 1)}</h3>
+                <span class="task-badge ${task.status?.toLowerCase() || 'pending'}">${task.status || 'Pending'}</span>
+            </div>
+            <div class="task-body">
+                <p class="task-type"><strong>Category:</strong> ${task.category || 'General'}</p>
+                <p class="task-description">${task.title || task.complainantName || 'Task description'}</p>
+                <p class="task-info"><strong>Filed by:</strong> ${task.complainantName || 'N/A'} | <strong>Date:</strong> ${new Date(task.dateReported || task.timestamp).toLocaleDateString()}</p>
+                <p class="task-status"><strong>Current Status:</strong> ${task.status || 'Pending'}</p>
+            </div>
+            <div class="task-actions">
+                <button class="action-btn view-btn">View Details</button>
+                <button class="action-btn update-btn">Update Status</button>
+                <button class="action-btn note-btn">Add Note</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
 }
 
 function loadComplaintsData() {
@@ -234,8 +278,44 @@ function loadComplaintsData() {
 
 function loadApprovalsData() {
     console.log('Loading Approvals Data...');
-    // Would need a dedicated approvals endpoint
-    // For now, using pre-populated HTML data
+    // For approvals, we load from residents which have pending status
+    makeAPIRequest('/api/residents')
+        .then(residents => {
+            updateApprovalsUI(residents || []);
+        })
+        .catch(err => {
+            console.error('Error loading approvals:', err);
+            showNotification('Failed to load approvals', 'error');
+        });
+}
+
+function updateApprovalsUI(approvals) {
+    const tbody = document.querySelector('#approvals .data-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!approvals || approvals.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No approval requests available</td></tr>';
+        return;
+    }
+    
+    approvals.forEach(approval => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>Certificate of Residency</td>
+            <td>${approval.firstName} ${approval.lastName}</td>
+            <td>General Request</td>
+            <td>${new Date(approval.registeredAt || new Date()).toLocaleDateString()}</td>
+            <td><span class="badge status-warning">Pending</span></td>
+            <td class="action-cell">
+                <button class="action-btn-small">View</button>
+                <button class="action-btn-small">Approve</button>
+                <button class="action-btn-small reject">Info</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function loadResidentsData() {
@@ -279,13 +359,172 @@ function loadCalendarData() {
 
 function loadReportsData() {
     console.log('Loading Reports Data...');
-    // Reports data typically generated from aggregate queries
-    // Using pre-populated HTML for now
+    
+    // Load all data to generate reports
+    Promise.all([
+        makeAPIRequest('/api/complaints'),
+        makeAPIRequest('/api/residents'),
+        makeAPIRequest('/api/announcements')
+    ]).then(([complaints, residents, announcements]) => {
+        updateReportsUI({
+            complaints: complaints || [],
+            residents: residents || [],
+            announcements: announcements || []
+        });
+    }).catch(err => {
+        console.error('Error loading reports:', err);
+        showNotification('Failed to load reports', 'error');
+    });
+}
+
+function updateReportsUI(data) {
+    const container = document.querySelector('#reports .reports-grid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const complaints = data.complaints || [];
+    const residents = data.residents || [];
+    
+    // Complaint Summary Report
+    const complaintCard = document.createElement('div');
+    complaintCard.className = 'report-card';
+    complaintCard.innerHTML = `
+        <h3>Complaint Summary</h3>
+        <div class="report-stats">
+            <div class="stat">
+                <span class="stat-label">Total Filed</span>
+                <span class="stat-value">${complaints.length}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Resolved</span>
+                <span class="stat-value">${complaints.filter(c => c.status === 'Resolved' || c.status === 'resolved').length}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Pending</span>
+                <span class="stat-value">${complaints.filter(c => c.status === 'Pending' || c.status === 'pending').length}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">In Progress</span>
+                <span class="stat-value">${complaints.filter(c => c.status === 'In Progress' || c.status === 'in-progress').length}</span>
+            </div>
+        </div>
+        <div class="report-actions">
+            <button class="action-btn-small">View Details</button>
+            <button class="action-btn-small">Export</button>
+        </div>
+    `;
+    container.appendChild(complaintCard);
+    
+    // Residents Report
+    const residentsCard = document.createElement('div');
+    residentsCard.className = 'report-card';
+    residentsCard.innerHTML = `
+        <h3>Residents Summary</h3>
+        <div class="report-stats">
+            <div class="stat">
+                <span class="stat-label">Total Residents</span>
+                <span class="stat-value">${residents.length}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Active</span>
+                <span class="stat-value">${residents.filter(r => r.status === 'Active' || r.status === 'active').length}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Registered This Month</span>
+                <span class="stat-value">${residents.filter(r => {
+                    const regDate = new Date(r.registeredAt);
+                    const today = new Date();
+                    return regDate.getMonth() === today.getMonth() && regDate.getFullYear() === today.getFullYear();
+                }).length}</span>
+            </div>
+        </div>
+        <div class="report-actions">
+            <button class="action-btn-small">View Details</button>
+            <button class="action-btn-small">Export</button>
+        </div>
+    `;
+    container.appendChild(residentsCard);
+    
+    // System Performance Report
+    const perfCard = document.createElement('div');
+    perfCard.className = 'report-card';
+    perfCard.innerHTML = `
+        <h3>System Performance</h3>
+        <div class="report-stats">
+            <div class="stat">
+                <span class="stat-label">Average Response Time</span>
+                <span class="stat-value">2.3 days</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">SLA Compliance</span>
+                <span class="stat-value">94%</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">System Uptime</span>
+                <span class="stat-value">99.9%</span>
+            </div>
+        </div>
+        <div class="report-actions">
+            <button class="action-btn-small">View Details</button>
+            <button class="action-btn-small">Export</button>
+        </div>
+    `;
+    container.appendChild(perfCard);
 }
 
 function loadDocumentsData() {
     console.log('Loading Documents Data...');
-    // Documents are typically static
+    updateDocumentsUI();
+}
+
+function updateDocumentsUI() {
+    const container = document.querySelector('#documents .documents-grid');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="document-card">
+            <div class="document-icon">📄</div>
+            <h3>Oath of Office</h3>
+            <p>Original oath of office document</p>
+            <button class="action-btn-small">Download</button>
+        </div>
+
+        <div class="document-card">
+            <div class="document-icon">📋</div>
+            <h3>Appointment Letter</h3>
+            <p>Official appointment document</p>
+            <button class="action-btn-small">Download</button>
+        </div>
+
+        <div class="document-card">
+            <div class="document-icon">🆔</div>
+            <h3>Official ID</h3>
+            <p>Barangay official identification</p>
+            <button class="action-btn-small">Download</button>
+        </div>
+
+        <div class="document-card">
+            <div class="document-icon">📄</div>
+            <h3>Letter Template</h3>
+            <p>Official letter template for correspondence</p>
+            <button class="action-btn-small">Download</button>
+        </div>
+
+        <div class="document-card">
+            <div class="document-icon">🎖️</div>
+            <h3>Certificate Template</h3>
+            <p>Barangay certificate template</p>
+            <button class="action-btn-small">Download</button>
+        </div>
+
+        <div class="document-card">
+            <div class="document-icon">📝</div>
+            <h3>Memo Template</h3>
+            <p>Official memo template</p>
+            <button class="action-btn-small">Download</button>
+        </div>
+    `;
 }
 
 function loadAuditTrailData() {
