@@ -538,6 +538,49 @@ router.patch('/users/:id/role', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/admin/users/:id/approve - Approve (activate) a pending user
+ */
+router.post('/users/:id/approve', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        await db.query('UPDATE users SET status = $1, updated_at = NOW() WHERE user_id = $2', ['Active', id]);
+
+        await db.query(`
+            INSERT INTO audit_logs (actor_user_id, action_type, target_type, target_id, ip_address, timestamp)
+            VALUES ($1, 'ApproveUser', 'User', $2, $3, NOW())
+        `, [req.user.user_id, id, req.ip]);
+
+        res.json({ success: true, message: 'User approved' });
+    } catch (error) {
+        console.error('Error approving user:', error);
+        res.status(500).json({ error: 'Failed to approve user' });
+    }
+});
+
+/**
+ * POST /api/admin/users/:id/reject - Reject a pending user (with optional reason)
+ */
+router.post('/users/:id/reject', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body || {};
+
+        await db.query('UPDATE users SET status = $1, updated_at = NOW() WHERE user_id = $2', ['Rejected', id]);
+
+        await db.query(`
+            INSERT INTO audit_logs (actor_user_id, action_type, target_type, target_id, details, ip_address, timestamp)
+            VALUES ($1, 'RejectUser', 'User', $2, $3, $4, NOW())
+        `, [req.user.user_id, id, reason || null, req.ip]);
+
+        res.json({ success: true, message: 'User rejected' });
+    } catch (error) {
+        console.error('Error rejecting user:', error);
+        res.status(500).json({ error: 'Failed to reject user' });
+    }
+});
+
 // ============= AUDIT LOGS =============
 
 /**

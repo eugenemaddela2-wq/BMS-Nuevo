@@ -561,9 +561,13 @@ class AdminDashboardManager {
                     <td style="font-size: 10px; color: ${user.mfa_enabled ? '#26d07c' : '#f5a623'};">${mfaStatus}</td>
                     <td><span class="badge ${statusClass}">${user.status || 'Active'}</span></td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editUserRoles(${user.user_id})">Roles</button>
-                        ${user.status === 'Active' ? `<button class="btn btn-danger btn-sm" onclick="adminDashboard.disableUser(${user.user_id})">Disable</button>` : ''}
-                    </td>
+                            <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editUserRoles(${user.user_id})">Roles</button>
+                            ${user.status && user.status.toLowerCase() === 'active' ? `<button class="btn btn-danger btn-sm" onclick="adminDashboard.disableUser(${user.user_id})">Disable</button>` : ''}
+                            ${user.status && user.status.toLowerCase() === 'pending' ? `
+                                <button class="btn btn-success btn-sm" onclick="adminDashboard.approveUser(${user.user_id})">Approve</button>
+                                <button class="btn btn-danger btn-sm" onclick="adminDashboard.rejectUser(${user.user_id})">Reject</button>
+                            ` : ''}
+                        </td>
                 </tr>
             `;
         });
@@ -796,6 +800,42 @@ class AdminDashboardManager {
     disableUser(userId) {
         if (confirm('Disable this user?')) {
             this.showNotification('User disabled');
+        }
+    }
+
+    async approveUser(userId) {
+        if (!confirm('Approve this user and activate the account?')) return;
+        try {
+            const response = await fetch(`${this.baseAPI}/users/${userId}/approve`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) throw new Error('Failed to approve user');
+            this.showNotification('User approved');
+            await this.loadUsers();
+        } catch (error) {
+            console.error('Error approving user:', error);
+            this.showError('Failed to approve user');
+        }
+    }
+
+    async rejectUser(userId) {
+        const reason = prompt('Reason for rejecting this user (optional):');
+        if (reason === null) return; // user cancelled prompt
+        try {
+            const response = await fetch(`${this.baseAPI}/users/${userId}/reject`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+
+            if (!response.ok) throw new Error('Failed to reject user');
+            this.showNotification('User rejected');
+            await this.loadUsers();
+        } catch (error) {
+            console.error('Error rejecting user:', error);
+            this.showError('Failed to reject user');
         }
     }
 
