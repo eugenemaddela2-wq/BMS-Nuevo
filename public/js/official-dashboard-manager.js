@@ -2,7 +2,6 @@ class OfficialDashboardManager {
     constructor() {
         this.officialId = null;
         this.officialData = null;
-        this.token = null;
         this.apiBaseUrl = '/api/official';
         this.currentPage = {};
         this.pageSize = 20;
@@ -11,9 +10,10 @@ class OfficialDashboardManager {
     async init() {
         try {
             // Check authentication
-            this.token = localStorage.getItem('token');
-            const userRole = localStorage.getItem('userRole');
-            const userId = localStorage.getItem('userId');
+            // Token is now dynamically read from sessionStorage via getter
+            const userRole = sessionStorage.getItem('userData') ? JSON.parse(sessionStorage.getItem('userData')).role : null;
+            const userData = JSON.parse(sessionStorage.getItem('userData') || 'null');
+            const userId = userData?.id;
 
             if (!this.token || userRole !== 'official') {
                 window.location.href = '/login.html';
@@ -38,6 +38,10 @@ class OfficialDashboardManager {
             console.error('Dashboard initialization failed:', error);
             this.showError('Failed to initialize dashboard');
         }
+    }
+
+    get token() {
+        return sessionStorage.getItem('accessToken');
     }
 
     setupNavigation() {
@@ -726,11 +730,34 @@ function closeModal(modalId) {
     if (modal) modal.classList.remove('active');
 }
 
-function logout() {
-    if (confirm('Are you sure you want to sign out?')) {
+async function logout() {
+    if (!confirm('Are you sure you want to sign out?')) return;
+
+    const token = sessionStorage.getItem('accessToken');
+    const btns = document.querySelectorAll('.btn-logout');
+    const prevTexts = [];
+    btns.forEach(b => { prevTexts.push(b.innerHTML); b.disabled = true; b.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Signing out...'; });
+    try {
+        if (token) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        }
+    } catch (err) {
+        console.warn('Logout API failed (non-critical):', err?.message || err);
+    } finally {
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('userData');
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
+        officialDashboard?.showNotification?.('Signed out successfully');
+        btns.forEach((b, i) => { b.disabled = false; b.innerHTML = prevTexts[i] || 'Sign Out'; });
         window.location.href = '/login.html';
     }
 }

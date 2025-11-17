@@ -53,6 +53,7 @@
             flex-direction: column;
             overflow-y: auto;
             z-index: 100;
+            position: relative; /* ensure z-index works */
         }
 
         .sidebar-header {
@@ -136,6 +137,9 @@
             flex-direction: column;
             gap: 10px;
             background: rgba(0,0,0,0.2);
+            position: relative; /* ensure z-index works and avoid overlay issues */
+            z-index: 20;
+            pointer-events: auto;
         }
 
         .btn-logout {
@@ -149,11 +153,20 @@
             font-size: 12px;
             transition: all 0.3s ease;
             width: 100%;
+            pointer-events: auto; /* ensure clickable */
+            position: relative;
+            z-index: 30;
         }
 
         .btn-logout:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .btn-logout[disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         /* MAIN CONTENT */

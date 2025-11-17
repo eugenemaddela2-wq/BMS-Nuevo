@@ -18,11 +18,15 @@ class AdminDashboardManager {
             sessions: [],
             pendingItems: []
         };
-        this.token = localStorage.getItem('token');
         this.baseAPI = '/api/admin';
         this.currentPage = 1;
         this.pageSize = 10;
         this.init();
+    }
+
+    // Dynamic token accessor reads the active session token from sessionStorage.
+    get token() {
+        return sessionStorage.getItem('accessToken');
     }
 
     async init() {
@@ -734,10 +738,10 @@ class AdminDashboardManager {
     async forceLogout(sessionId) {
         if (confirm('Force sign out this session?')) {
             try {
-                await fetch(`${this.baseAPI}/sessions/${sessionId}/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${this.token}` }
-                });
+                await fetch(`${this.baseAPI}/sessions/${sessionId}/signout`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
                 this.showNotification('Session terminated');
                 this.loadDashboardData();
             } catch (error) {
@@ -907,10 +911,35 @@ function closeModal(modalId) {
     if (modal) modal.classList.remove('active');
 }
 
-function logout() {
-    if (confirm('Sign out from admin dashboard?')) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('adminName');
+async function logout() {
+    if (!confirm('Sign out from admin dashboard?')) return;
+
+    const token = sessionStorage.getItem('accessToken');
+    const btns = document.querySelectorAll('.btn-logout');
+    const prevTexts = [];
+    btns.forEach(b => { prevTexts.push(b.innerHTML); b.disabled = true; b.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Signing out...'; });
+    try {
+        if (token) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        }
+    } catch (err) {
+        console.warn('Logout API call failed (non-critical):', err?.message || err);
+    } finally {
+        // Clear session and local storage keys used across the app
+        try { sessionStorage.removeItem('accessToken'); } catch(e){}
+        try { sessionStorage.removeItem('refreshToken'); } catch(e){}
+        try { sessionStorage.removeItem('userData'); } catch(e){}
+        try { sessionStorage.removeItem('registrationRefId'); } catch(e){}
+        try { localStorage.removeItem('token'); } catch(e){}
+        try { localStorage.removeItem('adminName'); } catch(e){}
+        adminDashboard?.showNotification?.('Signed out successfully');
+        btns.forEach((b, i) => { b.disabled = false; b.innerHTML = prevTexts[i] || 'Sign Out'; });
         window.location.href = '/login.html';
     }
 }

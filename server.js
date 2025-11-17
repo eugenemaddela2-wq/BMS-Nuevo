@@ -32,8 +32,11 @@ const PORT = process.env.PORT || 5000;
 // Initialize Database (creates tables and seeds data on first run)
 // ============================================================================
 
+console.log('[SERVER] Starting database initialization...');
 initializeDatabase().catch(err => {
-    console.error('Database initialization warning:', err.message);
+    console.error('[SERVER] Database initialization warning:', err.message);
+}).finally(() => {
+    console.log('[SERVER] Database initialization complete, server ready');
 });
 
 // ============================================================================
@@ -175,8 +178,15 @@ app.use((req,res,next)=>{
 // Error handling middleware
 app.use(errorHandler);
 
-app.listen(PORT, ()=>{
+const server = app.listen(PORT, () => {
   console.log(`BMS server listening on http://localhost:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
+});
+
+// Keep server alive
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close();
+  process.exit(0);
 });

@@ -13,9 +13,13 @@ class ResidentDashboardManager {
             announcements: [],
             messages: []
         };
-        this.token = localStorage.getItem('token');
+        // token now read using getter to remain consistent during the session
         this.baseAPI = '/api/resident';
         this.init();
+    }
+
+    get token() {
+        return sessionStorage.getItem('accessToken');
     }
 
     async init() {
@@ -681,9 +685,32 @@ function openEventModal(eventId) {
     openModal('eventForm');
 }
 
-function logout() {
-    if (confirm('Are you sure you want to sign out?')) {
+async function logout() {
+    if (!confirm('Are you sure you want to sign out?')) return;
+
+    const token = sessionStorage.getItem('accessToken');
+    const btns = document.querySelectorAll('.btn-logout');
+    const prevTexts = [];
+    btns.forEach(b => { prevTexts.push(b.innerHTML); b.disabled = true; b.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Signing out...'; });
+    try {
+        if (token) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        }
+    } catch (err) {
+        console.warn('Logout API failed (non-critical):', err?.message || err);
+    } finally {
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('userData');
         localStorage.removeItem('token');
+        residentDashboard?.showNotification?.('Signed out successfully');
+        btns.forEach((b, i) => { b.disabled = false; b.innerHTML = prevTexts[i] || 'Sign Out'; });
         window.location.href = '/login.html';
     }
 }

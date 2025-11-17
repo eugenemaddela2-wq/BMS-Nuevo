@@ -2,7 +2,7 @@
 // Authentication Middleware
 // ============================================================================
 
-import { verifyToken } from '../config/auth.js';
+import { verifyToken, hashToken } from '../config/auth.js';
 import { query } from '../config/database.js';
 
 // ============================================================================
@@ -21,6 +21,23 @@ export const authenticate = async (req, res, next) => {
         }
         
         const decoded = verifyToken(token, 'access');
+        // Check session state to ensure token hasn't been revoked
+        try {
+            const tokenHash = hashToken(token);
+            const sessionRes = await query('SELECT revoked_at, expires_at FROM sessions WHERE token_hash = $1', [tokenHash]);
+            if (sessionRes.rows.length === 0) {
+                // If session row is not found, treat as invalid
+                return res.status(401).json({ success: false, error: 'Invalid session' });
+            }
+            const sessionRow = sessionRes.rows[0];
+            if (sessionRow.revoked_at || (sessionRow.expires_at && new Date(sessionRow.expires_at) < new Date())) {
+                return res.status(401).json({ success: false, error: 'Session revoked or expired' });
+            }
+        } catch (sessErr) {
+            // If session lookup fails, proceed cautiously by rejecting the token
+            console.error('Session lookup error:', sessErr.message);
+            return res.status(401).json({ success: false, error: 'Invalid session' });
+        }
         req.user = {
             userId: decoded.userId,
             role: decoded.role
