@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
+import { WebSocketServer } from 'ws';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -183,6 +184,30 @@ const server = app.listen(PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
 });
+
+// WebSocket server
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws) => {
+  console.log('[WebSocket] Client connected');
+
+  // Send a welcome message
+  ws.send(JSON.stringify({ message: 'Welcome to the WebSocket server!' }));
+
+  // Handle incoming messages
+  ws.on('message', (data) => {
+    console.log(`[WebSocket] Received: ${data}`);
+    // Echo the message back to the client
+    ws.send(JSON.stringify({ message: `Echo: ${data}` }));
+  });
+
+  // Handle disconnection
+  ws.on('close', () => {
+    console.log('[WebSocket] Client disconnected');
+  });
+});
+
+console.log('[WebSocket] WebSocket server is running');
 
 // Keep server alive
 process.on('SIGTERM', () => {

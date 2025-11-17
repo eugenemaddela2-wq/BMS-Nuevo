@@ -21,6 +21,7 @@ class AdminDashboardManager {
         this.baseAPI = '/api/admin';
         this.currentPage = 1;
         this.pageSize = 10;
+        this.refreshIntervalId = null;
         this.init();
     }
 
@@ -38,6 +39,16 @@ class AdminDashboardManager {
         this.setupNavigation();
         this.setupModalHandlers();
         await this.loadDashboardData();
+
+        // Setup auto-refresh to keep summary cards realtime (every 30s)
+        this.refreshIntervalId = setInterval(() => this.loadDashboardData(), 30000);
+    }
+
+    clearRefreshInterval() {
+        if (this.refreshIntervalId) {
+            clearInterval(this.refreshIntervalId);
+            this.refreshIntervalId = null;
+        }
     }
 
     setupNavigation() {
@@ -930,7 +941,7 @@ async function logout() {
         }
     } catch (err) {
         console.warn('Logout API call failed (non-critical):', err?.message || err);
-    } finally {
+        } finally {
         // Clear session and local storage keys used across the app
         try { sessionStorage.removeItem('accessToken'); } catch(e){}
         try { sessionStorage.removeItem('refreshToken'); } catch(e){}
@@ -938,6 +949,8 @@ async function logout() {
         try { sessionStorage.removeItem('registrationRefId'); } catch(e){}
         try { localStorage.removeItem('token'); } catch(e){}
         try { localStorage.removeItem('adminName'); } catch(e){}
+        // Stop auto-refresh to avoid running background requests after signout
+        try { adminDashboard?.clearRefreshInterval?.(); } catch(e){}
         adminDashboard?.showNotification?.('Signed out successfully');
         btns.forEach((b, i) => { b.disabled = false; b.innerHTML = prevTexts[i] || 'Sign Out'; });
         window.location.href = '/login.html';

@@ -5,6 +5,7 @@ class OfficialDashboardManager {
         this.apiBaseUrl = '/api/official';
         this.currentPage = {};
         this.pageSize = 20;
+        this.refreshIntervalId = null;
     }
 
     async init() {
@@ -33,10 +34,20 @@ class OfficialDashboardManager {
             await this.loadDashboardData();
 
             // Setup auto-refresh
-            setInterval(() => this.loadDashboardData(), 30000); // Refresh every 30 seconds
+            this.refreshIntervalId = setInterval(() => this.loadDashboardData(), 30000); // Refresh every 30 seconds
+
+            // Establish WebSocket connection
+            this.setupWebSocket();
         } catch (error) {
             console.error('Dashboard initialization failed:', error);
             this.showError('Failed to initialize dashboard');
+        }
+    }
+
+    clearRefreshInterval() {
+        if (this.refreshIntervalId) {
+            clearInterval(this.refreshIntervalId);
+            this.refreshIntervalId = null;
         }
     }
 
@@ -716,6 +727,34 @@ class OfficialDashboardManager {
         document.body.appendChild(notif);
         setTimeout(() => notif.remove(), 4000);
     }
+
+    setupWebSocket() {
+        // Establish WebSocket connection
+        const ws = new WebSocket(`ws://${window.location.host}`);
+
+        ws.onopen = () => {
+            console.log('[WebSocket] Connected to server');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('[WebSocket] Message received:', data);
+
+            // Handle real-time updates (example: refresh dashboard content)
+            if (data.message) {
+                console.log('[WebSocket] Update:', data.message);
+                // Add logic to update the dashboard dynamically
+            }
+        };
+
+        ws.onclose = () => {
+            console.log('[WebSocket] Disconnected from server');
+        };
+
+        ws.onerror = (error) => {
+            console.error('[WebSocket] Error:', error);
+        };
+    }
 }
 
 // GLOBAL FUNCTIONS
@@ -756,6 +795,8 @@ async function logout() {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
+        // Clear any active auto-refresh
+        try { officialDashboard?.clearRefreshInterval?.(); } catch (e) {}
         officialDashboard?.showNotification?.('Signed out successfully');
         btns.forEach((b, i) => { b.disabled = false; b.innerHTML = prevTexts[i] || 'Sign Out'; });
         window.location.href = '/login.html';

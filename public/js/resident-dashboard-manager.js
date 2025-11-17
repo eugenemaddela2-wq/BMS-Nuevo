@@ -44,6 +44,13 @@ class ResidentDashboardManager {
                 }
             });
         });
+
+        // Set up periodic auto-refresh
+        const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
+        setInterval(() => {
+            console.log('[Resident Dashboard] Auto-refreshing data...');
+            this.loadDashboardData();
+        }, AUTO_REFRESH_INTERVAL);
     }
 
     setupNavigation() {

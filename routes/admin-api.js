@@ -28,16 +28,35 @@ router.use(requireAdmin);
  */
 router.get('/dashboard', async (req, res) => {
     try {
-        const stats = await db.query(`
-            SELECT
-                (SELECT COUNT(*) FROM residents WHERE status = 'Active') as total_residents,
-                (SELECT COUNT(*) FROM residents WHERE status = 'Pending') as pending_residents,
-                (SELECT COUNT(*) FROM documents WHERE status = 'Pending') as pending_documents,
-                (SELECT COUNT(*) FROM complaints WHERE status = 'New') as pending_complaints,
-                (SELECT COUNT(DISTINCT user_id) FROM sessions WHERE expires_at > NOW()) as active_sessions
-        `);
+        // Use defensive queries so missing tables or columns won't crash the entire endpoint.
+        const getCount = async (sql, params = []) => {
+            try {
+                const r = await db.query(sql, params);
+                return parseInt(r.rows?.[0]?.count || 0, 10);
+            } catch (err) {
+                console.warn('Count query failed:', sql, err.message);
+                return 0;
+            }
+        };
 
-        const recentActivity = await db.query(`
+        const totalResidents = await getCount("SELECT COUNT(*)::int as count FROM residents WHERE status = 'Active'");
+        const pendingResidents = await getCount("SELECT COUNT(*)::int as count FROM residents WHERE status = 'Pending'");
+        const pendingDocuments = await getCount("SELECT COUNT(*)::int as count FROM documents WHERE status = 'Pending'");
+        const pendingComplaints = await getCount("SELECT COUNT(*)::int as count FROM complaints WHERE status = 'New'");
+        const activeSessions = await getCount("SELECT COUNT(DISTINCT user_id)::int as count FROM sessions WHERE expires_at > NOW()");
+
+        // Safe fetch helper for result sets
+        const safeFetch = async (sql, params = []) => {
+            try {
+                const r = await db.query(sql, params);
+                return r.rows || [];
+            } catch (err) {
+                console.warn('Query failed:', sql, err.message);
+                return [];
+            }
+        };
+
+        const recentActivity = await safeFetch(`
             SELECT 
                 audit_logs.log_id as id,
                 audit_logs.action_type as type,
@@ -52,7 +71,7 @@ router.get('/dashboard', async (req, res) => {
             LIMIT 10
         `);
 
-        const pendingItems = await db.query(`
+        const pendingItemsRows = await safeFetch(`
             SELECT 'Registration' as type, CONCAT(first_name, ' ', last_name) as title, 
                    'Pending' as category, resident_id as id FROM residents WHERE status = 'Pending'
             UNION ALL
@@ -64,7 +83,7 @@ router.get('/dashboard', async (req, res) => {
             LIMIT 20
         `);
 
-        const auditSnapshot = await db.query(`
+        const auditSnapshot = await safeFetch(`
             SELECT 
                 audit_logs.log_id,
                 CONCAT(users.first_name, ' ', users.last_name) as actor,
@@ -79,7 +98,7 @@ router.get('/dashboard', async (req, res) => {
             LIMIT 5
         `);
 
-        const sessions = await db.query(`
+        const sessionsRows = await safeFetch(`
             SELECT 
                 sessions.session_id as sessionId,
                 users.username,
@@ -94,20 +113,18 @@ router.get('/dashboard', async (req, res) => {
 
         res.json({
             statistics: {
-                totalResidents: stats.rows[0].total_residents,
-                pendingItems: parseInt(stats.rows[0].pending_residents) + 
-                              parseInt(stats.rows[0].pending_documents) + 
-                              parseInt(stats.rows[0].pending_complaints),
-                activeSessions: stats.rows[0].active_sessions
+                totalResidents,
+                pendingItems: pendingResidents + pendingDocuments + pendingComplaints,
+                activeSessions
             },
-            recentActivity: recentActivity.rows.map(row => ({
+            recentActivity: recentActivity.map(row => ({
                 ...row,
                 timestamp: row.timestamp,
                 title: `${row.actor} ${row.type}`
             })),
-            pendingItems: pendingItems.rows,
-            auditSnapshot: auditSnapshot.rows,
-            sessions: sessions.rows
+            pendingItems: pendingItemsRows,
+            auditSnapshot: auditSnapshot,
+            sessions: sessionsRows
         });
 
     } catch (error) {
