@@ -1,0 +1,85 @@
+:root{
+  /* Primary gradient */
+  --color-primary: #667eea;
+  --color-primary-light: #764ba2;
+  /* Primary RGB helpers for alpha variants */
+  --color-primary-rgb: 102,126,234;
+  --color-primary-light-rgb: 118,75,162;
+
+  /* Accent RGB helper */
+  --color-accent-rgb: 74,222,128;
+
+  /* Status RGB helpers */
+  --color-success-rgb: 16,185,129;
+  --color-danger-rgb: 220,38,38;
+  --color-info-rgb: 59,130,246;
+  --color-warning-rgb: 245,158,11;
+
+  /* Accent colors */
+  --color-accent: #4ade80; /* neon green used in dashboards */
+  --accent-cyan: #4fc3dc;
+  --accent-green: #26d07c;
+  --accent-neon: #90ee90;
+  --accent-teal: #7ee1c7;
+
+  /* Alternate primary shades (used in info panels) */
+  --primary-alt-1: #6f6fbe;
+  --primary-alt-2: #8a8aed;
+  --primary-alt-highlight: #c8baff;
+
+  /* Backgrounds & surfaces */
+  --bg-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  --panel-bg: #6f6fbe;
+  --panel-border: #8a8aed;
+
+  /* Text */
+  --text-strong: #ffffff;
+  --text-muted: rgba(255,255,255,0.7);
+
+  /* Utility */
+  --glass-gradient: linear-gradient(45deg, var(--accent-cyan), var(--accent-green));
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.2);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.4);
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Z-index */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal: 400;
+
+  /* Common surface / background aliases used in other styles */
+  --color-bg-dark: #554ab6;
+  --color-bg-darker: #362f74;
+  --color-surface: #32dcca;
+  --color-surface-rgb: 50,220,200;
+  --color-surface-light: #553c96;
+  --color-surface-light-rgb: 85,60,150;
+  --surface-gradient: linear-gradient(135deg, #32dcca 0%, #553c96 100%);
+
+  /* Text aliases (kept for compatibility with existing CSS) */
+  --color-text-primary: var(--text-strong);
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+}
