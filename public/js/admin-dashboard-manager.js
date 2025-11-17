@@ -42,6 +42,83 @@ class AdminDashboardManager {
 
         // Setup auto-refresh to keep summary cards realtime (every 30s)
         this.refreshIntervalId = setInterval(() => this.loadDashboardData(), 30000);
+        // Setup WebSocket for real-time updates for all sections
+        this.setupRealtimeSockets();
+        // Setup WebSocket for resident real-time updates
+        this.setupResidentRealtime();
+    }
+
+    setupRealtimeSockets() {
+        if (this.realtimeSockets) return;
+        this.realtimeSockets = {};
+        const topics = [
+            'residents', 'officials', 'events', 'announcements', 'complaints', 'users',
+            'auditLogs', 'imports', 'exports', 'recentActivity', 'pendingQueue', 'auditSnapshot', 'sessions', 'exportsQuickAccess'
+        ];
+        topics.forEach(topic => {
+            const ws = new window.WebSocket(`ws://${window.location.hostname}:5000`);
+            ws.onopen = function() {
+                ws.send(JSON.stringify({ type: 'subscribe', topic: topic }));
+            };
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.topic === topic && msg.type === 'update') {
+                        switch (topic) {
+                            case 'residents': this.loadResidents(); break;
+                            case 'officials': this.loadOfficials(); break;
+                            case 'events': this.loadEvents(); break;
+                            case 'announcements': this.loadAnnouncements(); break;
+                            case 'complaints': this.loadComplaints(); break;
+                            case 'users': this.loadUsers(); break;
+                            case 'auditLogs': this.loadAuditLogs(); break;
+                            case 'imports': this.loadImports(); break;
+                            case 'exports': this.loadExports(); break;
+                            case 'recentActivity': this.loadDashboardData(); break;
+                            case 'pendingQueue': this.loadDashboardData(); break;
+                            case 'auditSnapshot': this.loadDashboardData(); break;
+                            case 'sessions': this.loadDashboardData(); break;
+                            case 'exportsQuickAccess': this.loadDashboardData(); break;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('WebSocket message error:', e);
+                }
+            };
+            ws.onerror = function(err) {
+                console.warn('WebSocket error for ' + topic + ':', err);
+            };
+            ws.onclose = function() {
+                this.realtimeSockets[topic] = null;
+            }.bind(this);
+            this.realtimeSockets[topic] = ws;
+        });
+    }
+    // WebSocket for real-time resident updates
+    setupResidentRealtime() {
+        if (this.residentSocket) return;
+        this.residentSocket = new WebSocket(`ws://${window.location.hostname}:5000`);
+        this.residentSocket.onopen = () => {
+            console.log('Resident WebSocket connected');
+            this.residentSocket.send(JSON.stringify({ type: 'subscribe', topic: 'residents' }));
+        };
+        this.residentSocket.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.topic === 'residents' && msg.type === 'update') {
+                    this.loadResidents();
+                }
+            } catch (e) {
+                console.warn('WebSocket message error:', e);
+            }
+        };
+        this.residentSocket.onerror = (err) => {
+            console.warn('Resident WebSocket error:', err);
+        };
+        this.residentSocket.onclose = () => {
+            console.log('Resident WebSocket closed');
+            this.residentSocket = null;
+        };
     }
 
     clearRefreshInterval() {
@@ -163,31 +240,14 @@ class AdminDashboardManager {
 
     renderActivityFeed() {
         const container = document.getElementById('activityFeed');
-        
         if (this.data.activityFeed.length === 0) {
-            container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 12px;">No activity yet</p>';
+            container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 12px;">No recent activity</p>';
             return;
         }
-
         let html = '';
-        this.data.activityFeed.slice(0, 8).forEach(activity => {
-            let icon = '📌';
-            let iconColor = '#4fc3dc';
-
-            if (activity.type === 'approval') {
-                icon = '✓';
-                iconColor = '#26d07c';
-            } else if (activity.type === 'rejection') {
-                icon = '✗';
-                iconColor = '#f5576c';
-            } else if (activity.type === 'document') {
-                icon = '📄';
-                iconColor = '#667eea';
-            } else if (activity.type === 'complaint') {
-                icon = '⚠️';
-                iconColor = '#f5a623';
-            }
-
+        this.data.activityFeed.forEach(activity => {
+            const iconColor = activity.type === 'create' ? '#26d07c' : activity.type === 'update' ? '#667eea' : '#f5a623';
+            const icon = activity.type === 'create' ? '+' : activity.type === 'update' ? '✎' : '!';
             html += `
                 <div class="activity-item">
                     <div class="activity-icon" style="background: rgba(${this.hexToRgb(iconColor)}, 0.2);">${icon}</div>
@@ -199,97 +259,79 @@ class AdminDashboardManager {
                 </div>
             `;
         });
-
         container.innerHTML = html;
     }
 
     renderPendingQueue() {
         const container = document.getElementById('pendingQueue');
         const filter = document.getElementById('pendingFilter')?.value || 'all';
-        
         let items = this.data.pendingItems;
         if (filter !== 'all') {
             items = items.filter(item => item.category === filter);
         }
-
         if (items.length === 0) {
             container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 12px;">No pending items</p>';
             return;
         }
-
         let html = '';
         items.slice(0, 6).forEach(item => {
-            html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 11px;">
-                    <div>
-                        <p style="margin: 0; font-weight: 600;">${item.title}</p>
-                        <p style="margin: 3px 0 0 0; color: var(--text-muted);">${item.category}</p>
-                    </div>
-                    <div style="display: flex; gap: 5px;">
-                        <button class="btn btn-primary btn-sm" onclick="this.parentElement.parentElement.style.display='none'">Approve</button>
-                        <button class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.style.display='none'">Reject</button>
-                    </div>
-                </div>
-            `;
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 11px;">' +
+                '<div>' +
+                    `<p style="margin: 0; font-weight: 600;">${item.title}</p>` +
+                    `<p style="margin: 3px 0 0 0; color: var(--text-muted);">${item.category}</p>` +
+                '</div>' +
+                '<div style="display: flex; gap: 5px;">' +
+                    '<button class="btn btn-primary btn-sm" onclick="this.parentElement.parentElement.style.display=\'none\'">Approve</button>' +
+                    '<button class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.style.display=\'none\'">Reject</button>' +
+                '</div>' +
+            '</div>';
         });
-
         container.innerHTML = html;
     }
 
     renderAuditSnapshot(logs) {
         const container = document.getElementById('auditSnapshot');
-        
         if (logs.length === 0) {
             container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 12px;">No audit logs</p>';
             return;
         }
-
         let html = '';
         logs.slice(0, 5).forEach(log => {
-            html += `
-                <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 10px;">
-                    <div style="flex: 1;">
-                        <p style="margin: 0; font-weight: 500;">${log.actor} • ${log.action}</p>
-                        <p style="margin: 3px 0 0 0; color: var(--text-muted);">${log.targetType} #${log.targetId}</p>
-                    </div>
-                    <div style="color: var(--text-muted); text-align: right;">
-                        <p style="margin: 0; font-size: 10px;">${new Date(log.timestamp).toLocaleString()}</p>
-                        <p style="margin: 3px 0 0 0; font-size: 9px;">${log.ipAddress}</p>
-                    </div>
-                </div>
-            `;
+            html += '<div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 10px;">' +
+                '<div style="flex: 1;">' +
+                    `<p style="margin: 0; font-weight: 500;">${log.actor} • ${log.action}</p>` +
+                    `<p style="margin: 3px 0 0 0; color: var(--text-muted);">${log.targetType} #${log.targetId}</p>` +
+                '</div>' +
+                '<div style="color: var(--text-muted); text-align: right;">' +
+                    `<p style="margin: 0; font-size: 10px;">${new Date(log.timestamp).toLocaleString()}</p>` +
+                    `<p style="margin: 3px 0 0 0; font-size: 9px;">${log.ipAddress}</p>` +
+                '</div>' +
+            '</div>';
         });
-
         container.innerHTML = html;
     }
 
     renderSessions(sessions) {
         const container = document.getElementById('sessionList');
-        
         if (sessions.length === 0) {
             container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px; font-size: 12px;">No active sessions</p>';
             return;
         }
-
         let html = '';
         sessions.forEach(session => {
             const status = session.isCurrent ? 'Current' : 'Active';
             const statusColor = session.isCurrent ? '#26d07c' : '#667eea';
-            
-            html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 11px;">
-                    <div>
-                        <p style="margin: 0; font-weight: 600;">${session.username}</p>
-                        <p style="margin: 3px 0 0 0; color: var(--text-muted); font-size: 10px;">${session.ipAddress} • ${new Date(session.loginAt).toLocaleString()}</p>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="background: rgba(${this.hexToRgb(statusColor)}, 0.2); color: ${statusColor}; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600;">${status}</span>
-                        ${!session.isCurrent ? `<button class="btn btn-danger btn-sm" onclick="adminDashboard.forceLogout('${session.sessionId}')">Sign Out</button>` : ''}
-                    </div>
-                </div>
-            `;
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 11px;">' +
+                '<div>' +
+                    `<p style="margin: 0; font-weight: 600;">${session.username}</p>` +
+                    `<p style="margin: 3px 0 0 0; color: var(--text-muted); font-size: 10px;">${session.ipAddress} • ${new Date(session.loginAt).toLocaleString()}</p>` +
+                '</div>' +
+                '<div style="display: flex; align-items: center; gap: 8px;">' +
+                    `<span style="background: rgba(${this.hexToRgb(statusColor)}, 0.2); color: ${statusColor}; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600;">${status}</span>` +
+                    (!session.isCurrent ? `<button class="btn btn-danger btn-sm" onclick="adminDashboard.forceLogout('${session.sessionId}')">Sign Out</button>` : '') +
+                '</div>' +
+            '</div>';
         });
-
         container.innerHTML = html;
     }
 
@@ -312,33 +354,43 @@ class AdminDashboardManager {
     }
 
     renderResidents() {
-        const tbody = document.querySelector('#residentsList tbody');
-        
-        if (this.data.residents.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">No residents found</td></tr>';
-            return;
-        }
-
-        let html = '';
-        this.data.residents.forEach(resident => {
-            const statusClass = `badge-${resident.status?.toLowerCase() || 'active'}`;
-            html += `
-                <tr>
-                    <td>${resident.resident_id}</td>
-                    <td>${resident.first_name} ${resident.last_name}</td>
-                    <td>${resident.date_of_birth ? new Date(resident.date_of_birth).toLocaleDateString() : '-'}</td>
-                    <td>${resident.purok_zone || '-'}</td>
-                    <td>${resident.contact_number || '-'}</td>
-                    <td><span class="badge ${statusClass}">${resident.status || 'Active'}</span></td>
-                    <td>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.viewResident(${resident.resident_id})">View</button>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editResident(${resident.resident_id})">Edit</button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        tbody.innerHTML = html;
+            const tbody = document.querySelector('#residentsList tbody');
+            if (this.data.residents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">No residents found</td></tr>';
+                return;
+            }
+            let html = '';
+            this.data.residents.forEach(resident => {
+                const statusClass = `badge-${resident.status?.toLowerCase() || 'active'}`;
+                html += `
+                    <tr>
+                        <td>${resident.resident_id}</td>
+                        <td>${resident.first_name} ${resident.last_name}</td>
+                        <td>${resident.date_of_birth ? new Date(resident.date_of_birth).toLocaleDateString() : '-'}</td>
+                        <td>${resident.purok_zone || '-'}</td>
+                        <td>${resident.contact_number || '-'}</td>
+                        <td><span class="badge ${statusClass}">${resident.status || 'Active'}</span></td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm view-btn" data-id="${resident.resident_id}">View</button>
+                            <button class="btn btn-secondary btn-sm edit-btn" data-id="${resident.resident_id}">Edit</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            // Attach event listeners for buttons
+            tbody.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = btn.getAttribute('data-id');
+                    this.viewResident(Number(id));
+                });
+            });
+            tbody.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = btn.getAttribute('data-id');
+                    this.editResident(Number(id));
+                });
+            });
     }
 
     async loadOfficials() {
@@ -942,22 +994,15 @@ async function logout() {
     } catch (err) {
         console.warn('Logout API call failed (non-critical):', err?.message || err);
         } finally {
-        // Clear session and local storage keys used across the app
-        try { sessionStorage.removeItem('accessToken'); } catch(e){}
-        try { sessionStorage.removeItem('refreshToken'); } catch(e){}
-        try { sessionStorage.removeItem('userData'); } catch(e){}
-        try { sessionStorage.removeItem('registrationRefId'); } catch(e){}
-        try { localStorage.removeItem('token'); } catch(e){}
-        try { localStorage.removeItem('adminName'); } catch(e){}
-        // Stop auto-refresh to avoid running background requests after signout
-        try { adminDashboard?.clearRefreshInterval?.(); } catch(e){}
-        adminDashboard?.showNotification?.('Signed out successfully');
-        btns.forEach((b, i) => { b.disabled = false; b.innerHTML = prevTexts[i] || 'Sign Out'; });
-        window.location.href = '/login.html';
-    }
-}
+        // restore logout buttons state
+        btns.forEach((b, i) => {
+            b.disabled = false;
+            b.innerHTML = prevTexts[i] || 'Sign out';
+        });
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    window.adminDashboard = new AdminDashboardManager();
-});
+        // clear session and redirect
+        sessionStorage.removeItem('accessToken');
+        localStorage.removeItem('adminName');
+        window.location.href = '/login.html';
+        }
+    }
