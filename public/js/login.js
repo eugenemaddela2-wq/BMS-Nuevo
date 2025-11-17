@@ -230,13 +230,13 @@ function clearSession() {
 
 function redirectToDashboard() {
     if (session.user?.role === 'admin') {
-        window.location.href = '/admin/admin-dashboard.html';
+        window.location.href = '/admin-dashboard.html';
     } else if (session.user?.role === 'official' || session.user?.role === 'clerk') {
         window.location.href = '/official-dashboard.html';
     } else if (session.user?.role === 'resident') {
         window.location.href = '/resident-dashboard.html';
     } else {
-        window.location.href = '/admin/admin-dashboard.html';
+        window.location.href = '/admin-dashboard.html';
     }
 }
 
