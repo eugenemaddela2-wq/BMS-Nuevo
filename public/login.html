@@ -54,10 +54,13 @@
                 </div>
             </div>
 
-            <div class="form-group checkbox" style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="rememberMe" name="rememberMe" style="margin-right: 6px;">
-                <label for="rememberMe" style="margin: 0;">Remember me</label>
-                <small class="form-hint" style="margin-left: 10px; color: #b3b3b3;">Secure session cookie will be stored</small>
+            <div class="form-group checkbox" style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="display: flex; align-items: center; margin-right: 10px;"> 
+                    <input type="checkbox" id="rememberMe" name="rememberMe" style="margin: 0;">
+                    <label for="rememberMe" style="margin: 0 0 0 4px;">Remember me</label>
+                </span>
+    
+                <small class="form-hint" style="color: #b3b3b3;">Secure session cookie will be stored</small>
             </div>
 
             <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 18px;">
@@ -202,7 +205,7 @@
                                 <i class="fa fa-eye"></i>
                             </button>
                         </div>
-                        <div class="password-requirements">
+                        <div class="password-requirements" style="color: #ffffff;">
                             <p class="requirement-title">Password requirements:</p>
                             <ul>
                                 <li id="req-length" class="requirement"><i class="fa fa-times"></i> At least 8 characters</li>
@@ -230,26 +233,29 @@
                         <div id="passwordMatchError" class="error-message hidden"></div>
                     </div>
 
-                    <div class="form-group checkbox">
-                        <label for="regTerms">
-                            <input type="checkbox" id="regTerms" name="regTerms" required>
-                            <span>I agree to the Terms & Conditions <span class="required">*</span></span>
-                        </label>
+
+                    <div class="form-group checkbox" style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <span style="display: flex; align-items: center; margin-right: 30px;">
+                            <input type="checkbox" id="regTerms" name="regTerms" required style="margin: 0;">
+                            <label for="regTerms" style="margin: 0 0 0 4px; font-weight: 500;">I agree to the Terms & Conditions <span class="required">*</span></label>
+                        </span>
+                    </div>
+
+                    <div class="form-group checkbox" style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <span style="display: flex; align-items: center; margin-right: 10px;">
+                            <input type="checkbox" id="regPrivacy" name="regPrivacy" required style="margin: 0;">
+                            <label for="regPrivacy" style="margin: 0 0 0 4px; font-weight: 500;">I agree to the Privacy Policy and consent to data processing <span class="required">*</span></label>
+                        </span>
+                        <small class="form-hint" style="color: #b3b3b3;">Your data will be used solely for Barangay Management System operations</small>
                     </div>
 
                     <div class="form-group checkbox">
-                        <label for="regPrivacy">
-                            <input type="checkbox" id="regPrivacy" name="regPrivacy" required>
-                            <span>I agree to the Privacy Policy and consent to data processing <span class="required">*</span></span>
-                        </label>
-                        <small class="form-hint">Your data will be used solely for Barangay Management System operations</small>
-                    </div>
-
-                    <div class="form-group checkbox">
-                        <label for="regCaptcha">
-                            <input type="checkbox" id="regCaptcha" name="regCaptcha">
-                            <span>I'm not a robot</span>
-                        </label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="regCaptcha" name="regCaptcha" style="margin: 0;">
+                            <label for="regCaptcha" style="margin: 0;">
+                                I'm not a robot
+                            </label>
+                        </div>
                         <small class="form-hint">Recommended for security</small>
                     </div>
 
