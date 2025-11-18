@@ -54,33 +54,35 @@
                 </div>
             </div>
 
-            <div class="form-group checkbox">
-                <label for="rememberMe">
-                    <input type="checkbox" id="rememberMe" name="rememberMe">
-                    <span>Remember me</span>
-                </label>
-                <small class="form-hint">Secure session cookie will be stored</small>
+            <div class="form-group checkbox" style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="rememberMe" name="rememberMe" style="margin-right: 6px;">
+                <label for="rememberMe" style="margin: 0;">Remember me</label>
+                <small class="form-hint" style="margin-left: 10px; color: #b3b3b3;">Secure session cookie will be stored</small>
             </div>
 
-            <a href="#" id="forgotPasswordLink" class="forgot-password-link">Forgot Password?</a>
+            <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 18px;">
+                <a href="#" id="forgotPasswordLink" class="forgot-password-link" style="font-size: 0.98rem; text-align: center;">Forgot Password?</a>
+            </div>
 
-            <button type="submit" class="btn primary-cta">
+            <button type="submit" class="btn primary-cta" style="width: 100%; margin-bottom: 16px; font-size: 1.08rem;">
                 <i class="fa fa-sign-in-alt"></i> Sign In
             </button>
 
-            <div class="divider">
+            <div class="divider" style="margin: 18px 0 10px 0; text-align: center; color: #ffffff;">
                 <span>or</span>
             </div>
 
             <!-- Demo Quick Login Buttons (visible on dev or when enabled by server config) -->
-            <div class="demo-quick-logins" id="demoQuickLogins" style="display:none; text-align:center; margin-top: 8px;">
+            <div class="demo-quick-logins" id="demoQuickLogins" style="display:none; text-align:center; margin-bottom: 18px;">
                 <small style="color:#ddd; display:block; margin-bottom:6px;">Quick demo login</small>
-                <button type="button" class="btn" id="demoAdminBtn">Demo Admin</button>
-                <button type="button" class="btn" id="demoOfficialBtn">Demo Official</button>
-                <button type="button" class="btn" id="demoResidentBtn">Demo Resident</button>
+                <div style="display: flex; justify-content: center; gap: 8px;">
+                    <button type="button" class="btn" id="demoAdminBtn">Demo Admin</button>
+                    <button type="button" class="btn" id="demoOfficialBtn">Demo Official</button>
+                    <button type="button" class="btn" id="demoResidentBtn">Demo Resident</button>
+                </div>
             </div>
 
-            <div class="social-buttons">
+            <div class="social-buttons" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 18px;">
                 <button type="button" class="btn-social btn-google" id="googleSignIn">
                     <i class="fab fa-google"></i> Google
                 </button>
@@ -89,7 +91,7 @@
                 </button>
             </div>
 
-            <div class="mt-12 small-muted text-white" style="color:#fff; font-size:0.95rem; text-align:center;">  
+            <div class="mt-12 small-muted text-white" style="color:#fff; font-size:0.97rem; text-align:center; margin-bottom: 0;">  
                 <span>Don't have an account yet?</span>
                 <a href="#" id="toRegisterLink" class="accent-link">Register Here</a>
             </div>

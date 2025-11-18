@@ -351,14 +351,14 @@ function handleForgotPassword() {
     }
 }
 
-function handleGoogleSignIn() {
-    console.log('Google Sign-In initiated');
-    showLoginError('Google Sign-In coming soon.');
+function handleGoogleSignIn(e) {
+    if (e) e.preventDefault();
+    alert('Google Sign-In will be implemented in a future version.');
 }
 
-function handlePhoneSignIn() {
-    console.log('Phone OTP Sign-In initiated');
-    showLoginError('Phone OTP Sign-In coming soon.');
+function handlePhoneSignIn(e) {
+    if (e) e.preventDefault();
+    alert('Phone OTP Sign-In will be implemented in a future version.');
 }
 
 // ============================================================================
