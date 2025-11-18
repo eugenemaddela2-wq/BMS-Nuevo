@@ -1022,7 +1022,7 @@ async function logout() {
         try { window.adminDashboard?.clearRefreshInterval?.(); } catch (e) {}
         sessionStorage.removeItem('accessToken');
         localStorage.removeItem('adminName');
-        window.location.href = '/logout.html';
+        window.location.href = '/login.html';
         }
     }
 
