@@ -31,6 +31,7 @@ class AdminDashboardManager {
     }
 
     async init() {
+        console.debug('AdminDashboardManager init. Token found?', !!this.token);
         if (!this.token) {
             window.location.href = '/login.html';
             return;
@@ -49,22 +50,33 @@ class AdminDashboardManager {
     }
 
     setupRealtimeSockets() {
+        // Avoid creating sockets again
         if (this.realtimeSockets) return;
         this.realtimeSockets = {};
+
+        // Topics to subscribe to via WS
         const topics = [
             'residents', 'officials', 'events', 'announcements', 'complaints', 'users',
             'auditLogs', 'imports', 'exports', 'recentActivity', 'pendingQueue', 'auditSnapshot', 'sessions', 'exportsQuickAccess'
         ];
-        topics.forEach(topic => {
-            const ws = new window.WebSocket(`ws://${window.location.hostname}:5000`);
-            ws.onopen = function() {
-                ws.send(JSON.stringify({ type: 'subscribe', topic: topic }));
+
+        // Choose scheme (wss for https, ws for http)
+        const primaryUrl = this.getWebSocketUrl();
+
+        try {
+            // We'll create a single socket that can stay alive and multiplex topics (sane default)
+            const ws = new window.WebSocket(primaryUrl);
+
+            ws.onopen = () => {
+                // subscribe to all topics
+                topics.forEach(topic => ws.send(JSON.stringify({ type: 'subscribe', topic })));
             };
+
             ws.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data);
-                    if (msg.topic === topic && msg.type === 'update') {
-                        switch (topic) {
+                    if (msg.type === 'update' && msg.topic) {
+                        switch (msg.topic) {
                             case 'residents': this.loadResidents(); break;
                             case 'officials': this.loadOfficials(); break;
                             case 'events': this.loadEvents(); break;
@@ -85,19 +97,62 @@ class AdminDashboardManager {
                     console.warn('WebSocket message error:', e);
                 }
             };
-            ws.onerror = function(err) {
-                console.warn('WebSocket error for ' + topic + ':', err);
+
+            ws.onerror = (err) => {
+                console.warn('WebSocket error:', err);
             };
-            ws.onclose = function() {
-                this.realtimeSockets[topic] = null;
-            }.bind(this);
-            this.realtimeSockets[topic] = ws;
-        });
+
+            ws.onclose = () => {
+                console.log('WebSocket connection closed, falling back to poller');
+                this.realtimeSockets = null;
+                // Start a simple poller fallback that refreshes every 30s
+                if (!this.pollerId) {
+                    this.pollerId = setInterval(() => this.loadDashboardData(), 30000);
+                }
+            };
+
+            this.realtimeSockets['default'] = ws;
+        } catch (e) {
+            console.warn('Failed to create WebSocket connection:', e);
+            // fallback to poller
+            if (!this.pollerId) {
+                this.pollerId = setInterval(() => this.loadDashboardData(), 30000);
+            }
+        }
+    }
+
+    getWebSocketUrl() {
+        // Priority: window.APP_WS_URL -> meta tag: <meta name="app:ws_url" content="wss://..."> -> same origin with port -> host:5000
+        if (window.APP_WS_URL) {
+            console.debug('[Admin] Using APP_WS_URL from global:', window.APP_WS_URL);
+            return window.APP_WS_URL;
+        }
+        const meta = document.querySelector('meta[name="app:ws_url"]');
+        if (meta && meta.content) {
+            console.debug('[Admin] Using APP_WS_URL from meta tag:', meta.content);
+            return meta.content;
+        }
+        const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const defaultPort = 5000;
+        const hostPort = window.location.port ? `${window.location.hostname}:${window.location.port}` : `${window.location.hostname}:${defaultPort}`;
+        const defaultUrl = `${scheme}://${hostPort}`;
+        console.debug('[Admin] Defaulting WS url to', defaultUrl);
+        return defaultUrl;
     }
     // WebSocket for real-time resident updates
     setupResidentRealtime() {
         if (this.residentSocket) return;
-        this.residentSocket = new WebSocket(`ws://${window.location.hostname}:5000`);
+        const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const defaultPort = 5000;
+        const hostPort = window.location.port ? `${window.location.hostname}:${window.location.port}` : `${window.location.hostname}:${defaultPort}`;
+        const wsUrl = `${scheme}://${hostPort}`;
+        try {
+            this.residentSocket = new WebSocket(wsUrl);
+        } catch (e) {
+            console.warn('Resident WebSocket could not be created, will use poller fallback:', e);
+            if (!this.pollerId) this.pollerId = setInterval(() => this.loadResidents(), 30000);
+            return;
+        }
         this.residentSocket.onopen = () => {
             console.log('Resident WebSocket connected');
             this.residentSocket.send(JSON.stringify({ type: 'subscribe', topic: 'residents' }));
@@ -118,6 +173,7 @@ class AdminDashboardManager {
         this.residentSocket.onclose = () => {
             console.log('Resident WebSocket closed');
             this.residentSocket = null;
+            if (!this.pollerId) this.pollerId = setInterval(() => this.loadResidents(), 30000);
         };
     }
 
@@ -1005,4 +1061,28 @@ async function logout() {
         localStorage.removeItem('adminName');
         window.location.href = '/login.html';
         }
+    }
+
+    // Instantiate the global adminDashboard manager after DOM is ready
+    function initAdminDashboardManager() {
+        try {
+            // instantiate and expose globally
+            window.adminDashboard = new AdminDashboardManager();
+            // show section corresponding to currently active nav-item (if any)
+            const activeNav = document.querySelector('.nav-item.active');
+            const section = activeNav?.dataset?.section || 'dashboard';
+            if (window.adminDashboard && typeof window.adminDashboard.showSection === 'function') {
+                // ensure content is synced with nav state
+                window.adminDashboard.showSection(section);
+            }
+        } catch (e) {
+            console.error('Failed to initialize AdminDashboardManager:', e);
+        }
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        // DOM already available
+        initAdminDashboardManager();
+    } else {
+        document.addEventListener('DOMContentLoaded', initAdminDashboardManager);
     }

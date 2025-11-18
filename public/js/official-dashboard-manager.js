@@ -729,8 +729,16 @@ class OfficialDashboardManager {
     }
 
     setupWebSocket() {
-        // Establish WebSocket connection
-        const ws = new WebSocket(`ws://${window.location.host}`);
+        // Establish WebSocket connection: prefer global or meta tag; otherwise default to same host + port
+        const wsUrl = (function(){
+            if (window.APP_WS_URL) return window.APP_WS_URL;
+            const meta = document.querySelector('meta[name="app:ws_url"]');
+            if (meta && meta.content) return meta.content;
+            const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            return `${scheme}://${window.location.host}`;
+        })();
+        console.debug('[Official] Using WS URL:', wsUrl);
+        const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
             console.log('[WebSocket] Connected to server');

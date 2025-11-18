@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
+import fs from 'fs';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
@@ -53,6 +54,20 @@ app.use(cookieParser());
 app.use(logRequest);
 
 // Serve static files from public
+// Serve admin-dashboard.html with dynamic WS URL meta when set in env
+app.get('/admin-dashboard.html', (req, res) => {
+  try {
+    const filePath = path.join(__dirname, 'public', 'admin-dashboard.html');
+    let content = fs.readFileSync(filePath, 'utf-8');
+    const injected = (process.env.APP_WS_URL || '').replace(/"/g, '');
+    content = content.replace('<meta name="app:ws_url" content="%APP_WS_URL%">', `<meta name="app:ws_url" content="${injected}">`);
+    return res.type('html').send(content);
+  } catch (err) {
+    console.error('[SERVER] Failed to serve admin-dashboard with dynamic WS URL:', err.message);
+    return res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+  }
+});
+
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 // ============================================================================
@@ -208,6 +223,11 @@ wss.on('connection', (ws) => {
 });
 
 console.log('[WebSocket] WebSocket server is running');
+
+// Health/probe route for monitoring
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), ws: 'ok' });
+});
 
 // Keep server alive
 process.on('SIGTERM', () => {

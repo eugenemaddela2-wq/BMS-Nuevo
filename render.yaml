@@ -20,6 +20,8 @@ services:
         sync: false  # Set via dashboard
       - key: REACT_APP_API_URL
         sync: false  # Will be auto-populated
+      - key: APP_WS_URL
+        sync: false
       - key: ALLOW_DEV_ROUTES
         value: "false"
 
