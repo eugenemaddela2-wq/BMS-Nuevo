@@ -1599,5 +1599,9 @@
 
     <!-- SCRIPTS -->
     <script src="js/admin-dashboard-manager.js"></script>
+    <script>
+    // Ensure the correct logout function is always used for admin dashboard
+    window.logout = window.logout || logout;
+    </script>
 </body>
 </html>
