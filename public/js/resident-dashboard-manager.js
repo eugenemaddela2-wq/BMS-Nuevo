@@ -51,6 +51,35 @@ class ResidentDashboardManager {
             console.log('[Resident Dashboard] Auto-refreshing data...');
             this.loadDashboardData();
         }, AUTO_REFRESH_INTERVAL);
+
+        // Subscribe to SSE for real-time updates
+        if (window.EventSource) {
+            try {
+                const token = sessionStorage.getItem('accessToken');
+                const es = new EventSource('/api/events/stream' + (token ? `?token=${encodeURIComponent(token)}` : ''));
+                es.onopen = () => console.debug('[Resident] SSE connected');
+                es.onerror = (err) => { console.warn('[Resident] SSE error:', err); es.close(); };
+                es.onmessage = (e) => {
+                    try {
+                        const msg = JSON.parse(e.data);
+                        if (!msg || !msg.topic) return;
+                        switch (msg.topic) {
+                            case 'announcements': this.loadAnnouncements(); break;
+                            case 'events': this.loadEvents(); break;
+                            case 'documents': this.loadDocuments(); break;
+                            case 'complaints': this.loadComplaints(); break;
+                            case 'messages': this.loadMessages(); break;
+                            case 'profile': this.loadDashboardData(); break;
+                            default: this.loadDashboardData(); break;
+                        }
+                    } catch (err) {
+                        console.warn('[Resident] SSE msg parse error', err);
+                    }
+                };
+            } catch (e) {
+                console.warn('[Resident] SSE setup failed:', e.message || e);
+            }
+        }
     }
 
     setupNavigation() {

@@ -11,7 +11,8 @@ import { query } from '../config/database.js';
 
 export const authenticate = async (req, res, next) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
+        // Support tokens in header OR query parameter (SSE / EventSource can't set headers)
+        const token = req.headers.authorization?.split(' ')[1] || req.query?.token || req.body?.token;
         
         if (!token) {
             return res.status(401).json({

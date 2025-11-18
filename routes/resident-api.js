@@ -127,6 +127,7 @@ router.get('/profile', authenticate, requireResident, async (req, res) => {
             return res.status(404).json({ error: 'Resident not found' });
         }
         
+        try { req.app.locals.emitter?.emit('update', { topic: 'residents', action: 'update', id: residentId, payload: result.rows[0] }); } catch (e) {}
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Profile error:', error);
@@ -210,6 +211,7 @@ router.post('/household', authenticate, requireResident, async (req, res) => {
             [householdId, firstName, lastName, dateOfBirth, sex, relation]
         );
         
+        try { req.app.locals.emitter?.emit('update', { topic: 'household', action: 'create', id: result.rows[0].id, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Add household member error:', error);
@@ -258,6 +260,7 @@ router.post('/complaints', authenticate, requireResident, async (req, res) => {
             [residentId, category, subject, description, location, JSON.stringify(attachments), confidential]
         );
         
+        try { req.app.locals.emitter?.emit('update', { topic: 'complaints', action: 'create', id: result.rows[0].id, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('File complaint error:', error);
@@ -326,6 +329,7 @@ router.post('/documents', authenticate, requireResident, async (req, res) => {
             [residentId, documentType, purpose, JSON.stringify(attachments)]
         );
         
+        try { req.app.locals.emitter?.emit('update', { topic: 'documents', action: 'create', id: result.rows[0].id, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Request document error:', error);
@@ -369,6 +373,7 @@ router.post('/events/:id/register', authenticate, requireResident, async (req, r
             [eventId, residentId, attendeeCount, specialRequirements]
         );
         
+        try { req.app.locals.emitter?.emit('update', { topic: 'events', action: 'register', id: eventId, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Event registration error:', error);
@@ -440,6 +445,7 @@ router.post('/messages', authenticate, requireResident, async (req, res) => {
             [residentId, recipientId, subject, message]
         );
         
+        try { req.app.locals.emitter?.emit('update', { topic: 'messages', action: 'create', id: result.rows[0].id, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Send message error:', error);

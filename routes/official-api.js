@@ -243,6 +243,7 @@ router.patch('/complaints/:id/status', async (req, res) => {
             ]
         );
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'complaints', action: 'update', id, payload: { status } }); } catch (e) {}
         res.json({ success: true, message: 'Complaint status updated' });
     } catch (error) {
         console.error('Error updating complaint:', error);
@@ -267,6 +268,7 @@ router.post('/complaints/:id/comment', async (req, res) => {
             [id, officialId, comment]
         );
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'complaints', action: 'comment', id, payload: { comment, commenter: officialId } }); } catch (e) {}
         res.json({ success: true, message: 'Comment added' });
     } catch (error) {
         console.error('Error adding comment:', error);
@@ -333,6 +335,7 @@ router.patch('/approvals/:id', async (req, res) => {
             ]
         );
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'documents', action: newStatus === 'approved' ? 'approve' : 'reject', id, payload: { officialId } }); } catch (e) {}
         res.json({ success: true, message: `Document ${newStatus}` });
     } catch (error) {
         console.error('Error updating approval:', error);
@@ -383,6 +386,7 @@ router.post('/events/:id/rsvp', async (req, res) => {
             [id, officialId, response]
         );
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'events', action: 'rsvp', id, payload: { officialId, response } }); } catch (e) {}
         res.json({ success: true, message: 'RSVP submitted' });
     } catch (error) {
         console.error('Error submitting RSVP:', error);
@@ -437,6 +441,7 @@ router.post('/announcements', async (req, res) => {
             [officialId, 'announcement_created', 'announcement', result.rows[0].id, req.ip]
         );
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'announcements', action: 'create', id: result.rows[0].id, payload: { title, audience } }); } catch (e) {}
         res.json({ success: true, announcement_id: result.rows[0].id });
     } catch (error) {
         console.error('Error creating announcement:', error);

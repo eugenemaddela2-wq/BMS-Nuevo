@@ -81,6 +81,18 @@ A comprehensive building management system with real-time dashboards for residen
 6. **Access the Application**
    Open your browser and go to: `http://localhost:5000`
 
+   ### 🔁 Auto-seeding for Demo
+   If you'd like to seed the demo accounts (admin, official, resident) automatically on startup, set the environment variable `SEED_DEMO_USERS=true` before starting the server. Example:
+
+   ```bash
+   SEED_DEMO_USERS=true npm start
+   ```
+
+   You can also run the seed script manually:
+   ```bash
+   npm run seed
+   ```
+
 ## 📁 Project Structure
 
 ```

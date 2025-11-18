@@ -198,6 +198,8 @@ router.post('/residents', async (req, res) => {
             VALUES ($1, 'Create', 'Resident', $2, $3, NOW())
         `, [req.user.user_id, result.rows[0].resident_id, req.ip]);
 
+        // Emit SSE update
+        try { req.app.locals.emitter?.emit('update', { topic: 'residents', action: 'create', id: result.rows[0].resident_id, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json({ success: true, resident: result.rows[0] });
 
     } catch (error) {
@@ -232,6 +234,7 @@ router.patch('/residents/:id', async (req, res) => {
             VALUES ($1, 'Update', 'Resident', $2, $3, NOW(), $4)
         `, [req.user.user_id, id, req.ip, JSON.stringify(updates)]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'residents', action: 'update', id: result.rows[0].resident_id, payload: result.rows[0] }); } catch (e) {}
         res.json({ success: true, resident: result.rows[0] });
 
     } catch (error) {
@@ -283,6 +286,7 @@ router.post('/officials', async (req, res) => {
             VALUES ($1, 'Create', 'Official', $2, $3, NOW())
         `, [req.user.user_id, result.rows[0].official_id, req.ip]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'officials', action: 'create', id: result.rows[0].official_id, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json({ success: true, official: result.rows[0] });
 
     } catch (error) {
@@ -347,6 +351,7 @@ router.post('/events', async (req, res) => {
             VALUES ($1, 'Create', 'Event', $2, $3, NOW())
         `, [req.user.user_id, result.rows[0].event_id, req.ip]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'events', action: 'create', id: result.rows[0].event_id, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json({ success: true, event: result.rows[0] });
 
     } catch (error) {
@@ -408,6 +413,7 @@ router.post('/announcements', async (req, res) => {
             VALUES ($1, 'Create', 'Announcement', $2, $3, NOW())
         `, [req.user.user_id, result.rows[0].announcement_id, req.ip]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'announcements', action: 'create', id: result.rows[0].announcement_id, payload: result.rows[0] }); } catch (e) {}
         res.status(201).json({ success: true, announcement: result.rows[0] });
 
     } catch (error) {
@@ -466,6 +472,7 @@ router.patch('/complaints/:id/status', async (req, res) => {
             VALUES ($1, 'Update', 'Complaint', $2, $3, NOW(), $4)
         `, [req.user.user_id, id, req.ip, JSON.stringify({ status, notes })]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'complaints', action: 'update', id, payload: { status } }); } catch (e) {}
         res.json({ success: true });
 
     } catch (error) {
@@ -547,6 +554,9 @@ router.patch('/users/:id/role', async (req, res) => {
             VALUES ($1, 'PermissionChange', 'User', $2, $3, NOW(), $4)
         `, [req.user.user_id, id, req.ip, JSON.stringify({ role })]);
 
+        // Emit SSE update for role change
+        try { req.app.locals.emitter?.emit('update', { topic: 'users', action: 'role-change', id, payload: { role } }); } catch (e) {}
+
         res.json({ success: true });
 
     } catch (error) {
@@ -569,6 +579,7 @@ router.post('/users/:id/approve', async (req, res) => {
             VALUES ($1, 'ApproveUser', 'User', $2, $3, NOW())
         `, [req.user.user_id, id, req.ip]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'users', action: 'approve', id }); } catch (e) {}
         res.json({ success: true, message: 'User approved' });
     } catch (error) {
         console.error('Error approving user:', error);
@@ -591,6 +602,7 @@ router.post('/users/:id/reject', async (req, res) => {
             VALUES ($1, 'RejectUser', 'User', $2, $3, $4, NOW())
         `, [req.user.user_id, id, reason || null, req.ip]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'users', action: 'reject', id }); } catch (e) {}
         res.json({ success: true, message: 'User rejected' });
     } catch (error) {
         console.error('Error rejecting user:', error);
@@ -669,6 +681,7 @@ router.post('/imports', async (req, res) => {
             RETURNING import_id
         `, [datasetTarget, fileName, req.user.user_id]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'imports', action: 'create', id: result.rows[0].import_id }); } catch (e) {}
         res.status(201).json({ success: true, import_id: result.rows[0].import_id });
 
     } catch (error) {
@@ -716,6 +729,7 @@ router.post('/exports', async (req, res) => {
             RETURNING export_id
         `, [dataset, format, req.user.user_id, JSON.stringify(filters || {})]);
 
+        try { req.app.locals.emitter?.emit('update', { topic: 'exports', action: 'create', id: result.rows[0].export_id }); } catch (e) {}
         res.status(201).json({ success: true, export_id: result.rows[0].export_id });
 
     } catch (error) {

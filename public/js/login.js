@@ -132,6 +132,20 @@ async function apiCall(endpoint, method = 'GET', data = null, useAuth = false) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     restoreSessionIfExists();
+    // Ask server if demo quick logins should be shown
+    (async function showDemoIfAllowed(){
+        try {
+            const response = await fetch('/api/config');
+            if (!response.ok) return;
+            const cfg = await response.json();
+            if (cfg.showDemoLogin) {
+                const demoEl = document.getElementById('demoQuickLogins');
+                if (demoEl) demoEl.style.display = 'block';
+            }
+        } catch (err) {
+            // ignore
+        }
+    })();
 });
 
 function initializeEventListeners() {
@@ -148,6 +162,16 @@ function initializeEventListeners() {
     });
     elements.googleSignIn.addEventListener('click', handleGoogleSignIn);
     elements.phoneSignIn.addEventListener('click', handlePhoneSignIn);
+        // Demo quick login buttons (created if allowed by server config)
+        document.getElementById('demoAdminBtn')?.addEventListener('click', () => {
+            performLogin('admin', 'admin123', true);
+        });
+        document.getElementById('demoOfficialBtn')?.addEventListener('click', () => {
+            performLogin('official1', 'password', true);
+        });
+        document.getElementById('demoResidentBtn')?.addEventListener('click', () => {
+            performLogin('resident1', 'password', true);
+        });
     
     // Register form
     elements.registerForm.addEventListener('submit', handleRegisterSubmit);

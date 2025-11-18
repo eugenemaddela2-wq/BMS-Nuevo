@@ -7,6 +7,8 @@
 import dotenv from 'dotenv';
 import { query, transaction } from '../config/database.js';
 import { hashPassword } from '../config/auth.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
 dotenv.config();
 
@@ -49,7 +51,7 @@ const testUsers = [
     }
 ];
 
-async function seedTestUsers() {
+export async function seedTestUsers() {
     try {
         console.log('🌱 Starting test user seeding into CockroachDB...\n');
         
@@ -174,13 +176,19 @@ async function seedTestUsers() {
         console.log('  • Database validates all login credentials');
         console.log('  • No hardcoded credentials in application\n');
 
-        process.exit(0);
+        return true;
 
     } catch (error) {
         console.error('Fatal error during seeding:', error);
-        process.exit(1);
+        return false;
     }
 }
+// If the script was executed directly, run seeder (standalone usage)
+const __filename = fileURLToPath(import.meta.url);
+if (process.argv[1] === __filename || process.argv.includes('--standalone')) {
+    seedTestUsers().then((ok) => {
+        process.exit(ok ? 0 : 1);
+    }).catch(() => process.exit(1));
+}
 
-// Run the seeding
-seedTestUsers();
+export default seedTestUsers;

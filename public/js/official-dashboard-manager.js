@@ -6,6 +6,7 @@ class OfficialDashboardManager {
         this.currentPage = {};
         this.pageSize = 20;
         this.refreshIntervalId = null;
+        this.sectionPollers = {};
     }
 
     async init() {
@@ -36,11 +37,39 @@ class OfficialDashboardManager {
             // Setup auto-refresh
             this.refreshIntervalId = setInterval(() => this.loadDashboardData(), 30000); // Refresh every 30 seconds
 
-            // Establish WebSocket connection
-            this.setupWebSocket();
+            // Setup per-section polling (replaces websockets)
+            this.setupSSE();
         } catch (error) {
             console.error('Dashboard initialization failed:', error);
             this.showError('Failed to initialize dashboard');
+        }
+    }
+
+    setupSSE() {
+        if (!window.EventSource) return;
+        try {
+            const token = sessionStorage.getItem('accessToken');
+            const es = new EventSource('/api/events/stream' + (token ? `?token=${encodeURIComponent(token)}` : ''));
+            es.onopen = () => console.debug('[Official] SSE connected');
+            es.onerror = (err) => { console.warn('[Official] SSE error:', err); es.close(); };
+            es.onmessage = (e) => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    if (!msg || !msg.topic) return;
+                    switch (msg.topic) {
+                        case 'complaints': this.loadComplaints(); break;
+                        case 'announcements': this.loadAnnouncements(); break;
+                        case 'tasks': this.loadTasks(); break;
+                        case 'events': this.loadEvents(); break;
+                        case 'documents': this.loadApprovals(); break;
+                        default: this.loadDashboardData(); break;
+                    }
+                } catch (err) {
+                    console.warn('[Official] SSE parse error', err);
+                }
+            };
+        } catch (e) {
+            console.warn('[Official] SSE setup failed:', e.message || e);
         }
     }
 
@@ -79,6 +108,24 @@ class OfficialDashboardManager {
         });
     }
 
+    // Polling utilities (replaces websocket)
+    startSectionPoller(section, loadFn, interval = 30000) {
+        if (this.sectionPollers[section]) return;
+        this.sectionPollers[section] = setInterval(() => loadFn.call(this), interval);
+    }
+
+    stopSectionPoller(section) {
+        const id = this.sectionPollers[section];
+        if (id) {
+            clearInterval(id);
+            delete this.sectionPollers[section];
+        }
+    }
+
+    stopAllSectionPollers() {
+        Object.keys(this.sectionPollers).forEach(s => this.stopSectionPoller(s));
+    }
+
     showSection(sectionName) {
         // Hide all sections
         document.querySelectorAll('.content-section').forEach(section => {
@@ -90,8 +137,20 @@ class OfficialDashboardManager {
         if (targetSection) {
             targetSection.classList.add('active');
 
+
             // Load section data
             this.loadSectionData(sectionName);
+            // Start a per-section poller (refresh every 30s)
+            this.stopAllSectionPollers();
+            switch (sectionName) {
+                case 'tasks': this.startSectionPoller('tasks', this.loadTasks, 30000); break;
+                case 'complaints': this.startSectionPoller('complaints', this.loadComplaints, 30000); break;
+                case 'approvals': this.startSectionPoller('approvals', this.loadApprovals, 30000); break;
+                case 'events': this.startSectionPoller('events', this.loadEvents, 30000); break;
+                case 'announcements': this.startSectionPoller('announcements', this.loadAnnouncements, 30000); break;
+                case 'residents': this.startSectionPoller('residents', this.loadResidents, 30000); break;
+                case 'reports': this.startSectionPoller('reports', this.loadReports, 30000); break;
+            }
         }
     }
 
@@ -728,41 +787,7 @@ class OfficialDashboardManager {
         setTimeout(() => notif.remove(), 4000);
     }
 
-    setupWebSocket() {
-        // Establish WebSocket connection: prefer global or meta tag; otherwise default to same host + port
-        const wsUrl = (function(){
-            if (window.APP_WS_URL) return window.APP_WS_URL;
-            const meta = document.querySelector('meta[name="app:ws_url"]');
-            if (meta && meta.content) return meta.content;
-            const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-            return `${scheme}://${window.location.host}`;
-        })();
-        console.debug('[Official] Using WS URL:', wsUrl);
-        const ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-            console.log('[WebSocket] Connected to server');
-        };
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log('[WebSocket] Message received:', data);
-
-            // Handle real-time updates (example: refresh dashboard content)
-            if (data.message) {
-                console.log('[WebSocket] Update:', data.message);
-                // Add logic to update the dashboard dynamically
-            }
-        };
-
-        ws.onclose = () => {
-            console.log('[WebSocket] Disconnected from server');
-        };
-
-        ws.onerror = (error) => {
-            console.error('[WebSocket] Error:', error);
-        };
-    }
+    // WebSocket support removed: using per-section polling instead
 }
 
 // GLOBAL FUNCTIONS
@@ -805,6 +830,7 @@ async function logout() {
         localStorage.removeItem('userRole');
         // Clear any active auto-refresh
         try { officialDashboard?.clearRefreshInterval?.(); } catch (e) {}
+        try { officialDashboard?.stopAllSectionPollers?.(); } catch (e) {}
         officialDashboard?.showNotification?.('Signed out successfully');
         btns.forEach((b, i) => { b.disabled = false; b.innerHTML = prevTexts[i] || 'Sign Out'; });
         window.location.href = '/login.html';

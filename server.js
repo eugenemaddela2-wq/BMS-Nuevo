@@ -3,11 +3,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import fs from 'fs';
+import EventEmitter from 'events';
+import { authenticate } from './middleware/auth.js';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
-import { WebSocketServer } from 'ws';
+// WebSocketServer removed - switching to polling
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -39,6 +41,13 @@ initializeDatabase().catch(err => {
     console.error('[SERVER] Database initialization warning:', err.message);
 }).finally(() => {
     console.log('[SERVER] Database initialization complete, server ready');
+  // Optionally seed demo users if requested by the environment (useful for demo deploys)
+  if (process.env.SEED_DEMO_USERS === 'true') {
+    import('./scripts/seed-test-users.js')
+      .then(module => module.seedTestUsers())
+      .then(ok => console.log('[SERVER] Demo user seeding:', ok ? 'Done' : 'Failed'))
+      .catch(err => console.error('[SERVER] Demo seeding error:', err?.message || err));
+  }
 });
 
 // ============================================================================
@@ -54,20 +63,6 @@ app.use(cookieParser());
 app.use(logRequest);
 
 // Serve static files from public
-// Serve admin-dashboard.html with dynamic WS URL meta when set in env
-app.get('/admin-dashboard.html', (req, res) => {
-  try {
-    const filePath = path.join(__dirname, 'public', 'admin-dashboard.html');
-    let content = fs.readFileSync(filePath, 'utf-8');
-    const injected = (process.env.APP_WS_URL || '').replace(/"/g, '');
-    content = content.replace('<meta name="app:ws_url" content="%APP_WS_URL%">', `<meta name="app:ws_url" content="${injected}">`);
-    return res.type('html').send(content);
-  } catch (err) {
-    console.error('[SERVER] Failed to serve admin-dashboard with dynamic WS URL:', err.message);
-    return res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
-  }
-});
-
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 // ============================================================================
@@ -182,6 +177,12 @@ app.get('/api/officials', (req,res)=>{ res.json([{ officialId:'O1', fullName:'Pu
 app.get('/api/complaints', (req,res)=>{ res.json([{ ref:'C123', complainantName:'Ana', category:'Noise', dateReported: now(), status:'New', priority:'High' }]); });
 app.get('/api/audit-logs', (req,res)=>{ res.json([{ logId:'L1', timestamp: now(), actor:'Admin', actionType:'Update', targetType:'Resident', targetId:'R-001', ip:'127.0.0.1', details:'changed address' }]); });
 
+// Public config endpoint to control demo features in frontend
+app.get('/api/config', (req, res) => {
+  const showDemo = process.env.DEMO_SHOW_QUICK_LOGIN === 'true' || (process.env.NODE_ENV !== 'production');
+  res.json({ showDemoLogin: showDemo });
+});
+
 /* --------- Fallbacks & start server --------- */
 app.use((req,res,next)=>{
   // If request seems to accept html, serve index or 404
@@ -200,33 +201,40 @@ const server = app.listen(PORT, () => {
   console.log(`Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
 });
 
-// WebSocket server
-const wss = new WebSocketServer({ server });
-
-wss.on('connection', (ws) => {
-  console.log('[WebSocket] Client connected');
-
-  // Send a welcome message
-  ws.send(JSON.stringify({ message: 'Welcome to the WebSocket server!' }));
-
-  // Handle incoming messages
-  ws.on('message', (data) => {
-    console.log(`[WebSocket] Received: ${data}`);
-    // Echo the message back to the client
-    ws.send(JSON.stringify({ message: `Echo: ${data}` }));
-  });
-
-  // Handle disconnection
-  ws.on('close', () => {
-    console.log('[WebSocket] Client disconnected');
-  });
-});
-
-console.log('[WebSocket] WebSocket server is running');
+// WebSocket server has been removed in favor of polling; use /api/status for health checks.
 
 // Health/probe route for monitoring
 app.get('/api/status', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), ws: 'ok' });
+});
+
+// Create an event emitter for server-side events (SSE)
+app.locals.emitter = new EventEmitter();
+
+// SSE endpoint for clients to subscribe to server-sent events
+app.get('/api/events/stream', authenticate, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders && res.flushHeaders();
+
+  const send = (payload) => {
+    try {
+      res.write(`event: update\n`);
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    } catch (err) { console.warn('SSE send error', err?.message || err); }
+  };
+
+  const onUpdate = (payload) => send(payload);
+  app.locals.emitter.on('update', onUpdate);
+
+  // Keepalive comment every 15s to avoid proxy termination
+  const keepAlive = setInterval(() => { try { res.write(':keepalive\n\n'); } catch (e) {} }, 15000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    app.locals.emitter.off('update', onUpdate);
+  });
 });
 
 // Keep server alive

@@ -22,6 +22,7 @@ class AdminDashboardManager {
         this.currentPage = 1;
         this.pageSize = 10;
         this.refreshIntervalId = null;
+        this.sectionPollers = {}; // map of sectionName -> intervalId
         this.init();
     }
 
@@ -39,142 +40,83 @@ class AdminDashboardManager {
 
         this.setupNavigation();
         this.setupModalHandlers();
+        this.setupSSE();
         await this.loadDashboardData();
 
         // Setup auto-refresh to keep summary cards realtime (every 30s)
         this.refreshIntervalId = setInterval(() => this.loadDashboardData(), 30000);
-        // Setup WebSocket for real-time updates for all sections
-        this.setupRealtimeSockets();
-        // Setup WebSocket for resident real-time updates
-        this.setupResidentRealtime();
     }
 
-    setupRealtimeSockets() {
-        // Avoid creating sockets again
-        if (this.realtimeSockets) return;
-        this.realtimeSockets = {};
-
-        // Topics to subscribe to via WS
-        const topics = [
-            'residents', 'officials', 'events', 'announcements', 'complaints', 'users',
-            'auditLogs', 'imports', 'exports', 'recentActivity', 'pendingQueue', 'auditSnapshot', 'sessions', 'exportsQuickAccess'
-        ];
-
-        // Choose scheme (wss for https, ws for http)
-        const primaryUrl = this.getWebSocketUrl();
-
+    setupSSE() {
+        if (!window.EventSource) return;
         try {
-            // We'll create a single socket that can stay alive and multiplex topics (sane default)
-            const ws = new window.WebSocket(primaryUrl);
-
-            ws.onopen = () => {
-                // subscribe to all topics
-                topics.forEach(topic => ws.send(JSON.stringify({ type: 'subscribe', topic })));
-            };
-
-            ws.onmessage = (event) => {
+            const token = sessionStorage.getItem('accessToken');
+            const es = new EventSource('/api/events/stream' + (token ? `?token=${encodeURIComponent(token)}` : ''));
+            es.onopen = () => console.debug('SSE connected');
+            es.onerror = (err) => { console.warn('SSE error:', err); es.close(); };
+            es.onmessage = (e) => {
                 try {
-                    const msg = JSON.parse(event.data);
-                    if (msg.type === 'update' && msg.topic) {
-                        switch (msg.topic) {
-                            case 'residents': this.loadResidents(); break;
-                            case 'officials': this.loadOfficials(); break;
-                            case 'events': this.loadEvents(); break;
-                            case 'announcements': this.loadAnnouncements(); break;
-                            case 'complaints': this.loadComplaints(); break;
-                            case 'users': this.loadUsers(); break;
-                            case 'auditLogs': this.loadAuditLogs(); break;
-                            case 'imports': this.loadImports(); break;
-                            case 'exports': this.loadExports(); break;
-                            case 'recentActivity': this.loadDashboardData(); break;
-                            case 'pendingQueue': this.loadDashboardData(); break;
-                            case 'auditSnapshot': this.loadDashboardData(); break;
-                            case 'sessions': this.loadDashboardData(); break;
-                            case 'exportsQuickAccess': this.loadDashboardData(); break;
-                        }
+                    const msg = JSON.parse(e.data);
+                    if (!msg || !msg.topic) return;
+                    switch (msg.topic) {
+                        case 'residents':
+                            this.loadResidents();
+                            break;
+                        case 'officials':
+                            this.loadOfficials();
+                            break;
+                        case 'events':
+                            this.loadEvents();
+                            break;
+                        case 'announcements':
+                            this.loadAnnouncements();
+                            break;
+                        case 'complaints':
+                            this.loadComplaints();
+                            break;
+                        case 'users':
+                            this.loadUsers();
+                            break;
+                        case 'imports':
+                            this.loadImports();
+                            break;
+                        case 'exports':
+                            this.loadExports();
+                            break;
+                        case 'activity':
+                        case 'recentActivity':
+                            this.loadDashboardData();
+                            break;
+                        default:
+                            // Unknown topic - fallback to load dashboard
+                            this.loadDashboardData();
+                            break;
                     }
-                } catch (e) {
-                    console.warn('WebSocket message error:', e);
+                } catch (err) {
+                    console.warn('SSE message parse error', err);
                 }
             };
-
-            ws.onerror = (err) => {
-                console.warn('WebSocket error:', err);
-            };
-
-            ws.onclose = () => {
-                console.log('WebSocket connection closed, falling back to poller');
-                this.realtimeSockets = null;
-                // Start a simple poller fallback that refreshes every 30s
-                if (!this.pollerId) {
-                    this.pollerId = setInterval(() => this.loadDashboardData(), 30000);
-                }
-            };
-
-            this.realtimeSockets['default'] = ws;
         } catch (e) {
-            console.warn('Failed to create WebSocket connection:', e);
-            // fallback to poller
-            if (!this.pollerId) {
-                this.pollerId = setInterval(() => this.loadDashboardData(), 30000);
-            }
+            console.warn('SSE not available or blocked', e.message || e);
         }
     }
 
-    getWebSocketUrl() {
-        // Priority: window.APP_WS_URL -> meta tag: <meta name="app:ws_url" content="wss://..."> -> same origin with port -> host:5000
-        if (window.APP_WS_URL) {
-            console.debug('[Admin] Using APP_WS_URL from global:', window.APP_WS_URL);
-            return window.APP_WS_URL;
-        }
-        const meta = document.querySelector('meta[name="app:ws_url"]');
-        if (meta && meta.content) {
-            console.debug('[Admin] Using APP_WS_URL from meta tag:', meta.content);
-            return meta.content;
-        }
-        const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const defaultPort = 5000;
-        const hostPort = window.location.port ? `${window.location.hostname}:${window.location.port}` : `${window.location.hostname}:${defaultPort}`;
-        const defaultUrl = `${scheme}://${hostPort}`;
-        console.debug('[Admin] Defaulting WS url to', defaultUrl);
-        return defaultUrl;
+    // Polling utilities
+    startSectionPoller(section, loadFn, interval = 30000) {
+        if (this.sectionPollers[section]) return; // already polling
+        this.sectionPollers[section] = setInterval(() => loadFn.call(this), interval);
     }
-    // WebSocket for real-time resident updates
-    setupResidentRealtime() {
-        if (this.residentSocket) return;
-        const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const defaultPort = 5000;
-        const hostPort = window.location.port ? `${window.location.hostname}:${window.location.port}` : `${window.location.hostname}:${defaultPort}`;
-        const wsUrl = `${scheme}://${hostPort}`;
-        try {
-            this.residentSocket = new WebSocket(wsUrl);
-        } catch (e) {
-            console.warn('Resident WebSocket could not be created, will use poller fallback:', e);
-            if (!this.pollerId) this.pollerId = setInterval(() => this.loadResidents(), 30000);
-            return;
+
+    stopSectionPoller(section) {
+        const id = this.sectionPollers[section];
+        if (id) {
+            clearInterval(id);
+            delete this.sectionPollers[section];
         }
-        this.residentSocket.onopen = () => {
-            console.log('Resident WebSocket connected');
-            this.residentSocket.send(JSON.stringify({ type: 'subscribe', topic: 'residents' }));
-        };
-        this.residentSocket.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.topic === 'residents' && msg.type === 'update') {
-                    this.loadResidents();
-                }
-            } catch (e) {
-                console.warn('WebSocket message error:', e);
-            }
-        };
-        this.residentSocket.onerror = (err) => {
-            console.warn('Resident WebSocket error:', err);
-        };
-        this.residentSocket.onclose = () => {
-            console.log('Resident WebSocket closed');
-            this.residentSocket = null;
-            if (!this.pollerId) this.pollerId = setInterval(() => this.loadResidents(), 30000);
-        };
+    }
+
+    stopAllSectionPollers() {
+        Object.keys(this.sectionPollers).forEach(s => this.stopSectionPoller(s));
     }
 
     clearRefreshInterval() {
@@ -205,52 +147,70 @@ class AdminDashboardManager {
     }
 
     showSection(sectionName) {
-        document.querySelectorAll('.content-section').forEach(section => {
-            section.classList.remove('active');
-        });
+        // hide all sections
+        document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+        // show requested section
+        const target = document.getElementById(`${sectionName}-section`);
+        if (target) target.classList.add('active');
 
-        const section = document.querySelector(`#${sectionName}-section`);
-        if (section) {
-            section.classList.add('active');
-        }
-
+        // update nav active state
         document.querySelectorAll('[data-section]').forEach(item => {
             item.classList.remove('active');
-            if (item.dataset.section === sectionName) {
-                item.classList.add('active');
-            }
+            if (item.dataset.section === sectionName) item.classList.add('active');
         });
 
+        // stop any previous section pollers
+        this.stopAllSectionPollers();
+
+        // Load and start poller for the requested section
         switch(sectionName) {
+            case 'dashboard':
+                this.loadDashboardData();
+                this.startSectionPoller('dashboard', this.loadDashboardData, 30000);
+                break;
             case 'residents':
                 this.loadResidents();
+                this.startSectionPoller('residents', this.loadResidents, 30000);
                 break;
             case 'officials':
                 this.loadOfficials();
+                this.startSectionPoller('officials', this.loadOfficials, 30000);
                 break;
             case 'events':
                 this.loadEvents();
+                this.startSectionPoller('events', this.loadEvents, 30000);
                 break;
             case 'announcements':
                 this.loadAnnouncements();
+                this.startSectionPoller('announcements', this.loadAnnouncements, 30000);
                 break;
             case 'complaints':
                 this.loadComplaints();
+                this.startSectionPoller('complaints', this.loadComplaints, 30000);
                 break;
             case 'users':
                 this.loadUsers();
+                this.startSectionPoller('users', this.loadUsers, 30000);
                 break;
             case 'audit':
                 this.loadAuditLogs();
+                this.startSectionPoller('audit', this.loadAuditLogs, 30000);
                 break;
             case 'imports':
                 this.loadImports();
+                this.startSectionPoller('imports', this.loadImports, 30000);
                 break;
             case 'exports':
                 this.loadExports();
+                this.startSectionPoller('exports', this.loadExports, 30000);
+                break;
+            default:
+                // no-op
                 break;
         }
     }
+
+    // Resident updates are covered by per-section polling
 
     async loadDashboardData() {
         try {
@@ -1057,6 +1017,9 @@ async function logout() {
         });
 
         // clear session and redirect
+        // clear timers/pollers
+        try { window.adminDashboard?.stopAllSectionPollers?.(); } catch (e) {}
+        try { window.adminDashboard?.clearRefreshInterval?.(); } catch (e) {}
         sessionStorage.removeItem('accessToken');
         localStorage.removeItem('adminName');
         window.location.href = '/login.html';
