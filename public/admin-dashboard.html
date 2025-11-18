@@ -1598,10 +1598,15 @@
     </div>
 
     <!-- SCRIPTS -->
-    <script src="js/admin-dashboard-manager.js"></script>
-    <script>
-    // Ensure the correct logout function is always used for admin dashboard
-    window.logout = window.logout || logout;
-    </script>
+        <script src="js/admin-dashboard-manager.js"></script>
+        <script>
+        // Always bind the correct logout for admin dashboard
+        (function() {
+            // Find the logout function defined in admin-dashboard-manager.js
+            if (typeof logout === 'function') {
+                window.logout = logout;
+            }
+        })();
+        </script>
 </body>
 </html>
