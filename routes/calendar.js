@@ -197,7 +197,7 @@ router.post('/api/events', authenticate, async (req, res) => {
 
             // Log the action
             await client.query(
-                `INSERT INTO audit_logs (action_type, resource_type, resource_id, details, user_id, created_at)
+                `INSERT INTO audit_logs (action_type, resource_type, resource_id, details, actor_user_id, created_at)
                  VALUES ($1, $2, $3, $4, $5, NOW())`,
                 ['EVENT_CREATED', 'events', event.id, JSON.stringify({ title, venue }), userId]
             );
@@ -272,7 +272,7 @@ router.put('/api/events/:id', authenticate, async (req, res) => {
             if (updateResult.rows.length > 0) {
                 // Log the action
                 await client.query(
-                    `INSERT INTO audit_logs (action_type, resource_type, resource_id, details, user_id, created_at)
+                    `INSERT INTO audit_logs (action_type, resource_type, resource_id, details, actor_user_id, created_at)
                      VALUES ($1, $2, $3, $4, $5, NOW())`,
                     ['EVENT_UPDATED', 'events', id, JSON.stringify({ title }), userId]
                 );
@@ -334,11 +334,11 @@ router.delete('/api/events/:id', authenticate, async (req, res) => {
             await client.query('DELETE FROM events WHERE id = $1', [id]);
 
             // Log the action
-            await client.query(
-                `INSERT INTO audit_logs (action_type, resource_type, resource_id, details, user_id, created_at)
-                 VALUES ($1, $2, $3, $4, $5, NOW())`,
-                ['EVENT_DELETED', 'events', id, JSON.stringify({ title: event.title }), userId]
-            );
+                await client.query(
+                    `INSERT INTO audit_logs (action_type, resource_type, resource_id, details, actor_user_id, created_at)
+                     VALUES ($1, $2, $3, $4, $5, NOW())`,
+                    ['EVENT_DELETED', 'events', id, JSON.stringify({ title: event.title }), userId]
+                );
         });
 
         res.json({

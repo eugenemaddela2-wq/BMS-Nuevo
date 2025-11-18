@@ -122,7 +122,7 @@ export const logRequest = async (req, res, next) => {
         if (req.user) {
             try {
                 await query(
-                    `INSERT INTO audit_logs (user_id, action_type, resource_type, resource_id, details, ip_address, user_agent)
+                    `INSERT INTO audit_logs (actor_user_id, action_type, resource_type, resource_id, details, ip_address, user_agent)
                      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
                     [
                         req.user.userId,
@@ -199,8 +199,8 @@ export const auditTrail = (actionType) => {
             if (res.statusCode < 400 && req.user) {
                 try {
                     await query(
-                        `INSERT INTO audit_logs (user_id, action_type, resource_type, details, ip_address, user_agent, created_at)
-                         VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+                        `INSERT INTO audit_logs (actor_user_id, action_type, resource_type, details, ip_address, user_agent, created_at)
+                            VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
                         [
                             req.user.userId,
                             actionType,

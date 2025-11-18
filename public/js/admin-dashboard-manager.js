@@ -645,11 +645,12 @@ class AdminDashboardManager {
                     <td><span class="badge ${statusClass}">${user.status || 'Active'}</span></td>
                     <td>
                             <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editUserRoles(${user.user_id})">Roles</button>
-                            ${user.status && user.status.toLowerCase() === 'active' ? `<button class="btn btn-danger btn-sm" onclick="adminDashboard.disableUser(${user.user_id})">Disable</button>` : ''}
+                            ${user.status && user.status.toLowerCase() === 'active' ? `<button class="btn btn-danger btn-sm" onclick="adminDashboard.disableUser('${user.user_id}')">Disable</button>` : ''}
                             ${user.status && user.status.toLowerCase() === 'pending' ? `
-                                <button class="btn btn-success btn-sm" onclick="adminDashboard.approveUser(${user.user_id})">Approve</button>
-                                <button class="btn btn-danger btn-sm" onclick="adminDashboard.rejectUser(${user.user_id})">Reject</button>
+                                <button class="btn btn-success btn-sm" onclick="adminDashboard.approveUser('${user.user_id}')">Approve</button>
+                                <button class="btn btn-danger btn-sm" onclick="adminDashboard.rejectUser('${user.user_id}')">Reject</button>
                             ` : ''}
+                            ${user.status && (user.status.toLowerCase() === 'disabled' || user.status.toLowerCase() === 'rejected') ? `<button class="btn btn-success btn-sm" onclick="adminDashboard.enableUser('${user.user_id}')">Enable</button>` : ''}
                         </td>
                 </tr>
             `;
@@ -881,8 +882,22 @@ class AdminDashboardManager {
     }
 
     disableUser(userId) {
-        if (confirm('Disable this user?')) {
-            this.showNotification('User disabled');
+        if (!confirm('Disable this user?')) return;
+        try {
+            fetch(`${this.baseAPI}/users/${encodeURIComponent(userId)}/disable`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' }
+            }).then(async (res) => {
+                if (!res.ok) throw new Error('Failed to disable user');
+                this.showNotification('User disabled');
+                await this.loadUsers();
+            }).catch(err => {
+                console.error('Error disabling user:', err);
+                this.showError('Failed to disable user');
+            });
+        } catch (err) {
+            console.error('Error disabling user:', err);
+            this.showError('Failed to disable user');
         }
     }
 
@@ -919,6 +934,68 @@ class AdminDashboardManager {
         } catch (error) {
             console.error('Error rejecting user:', error);
             this.showError('Failed to reject user');
+        }
+    }
+
+    async enableUser(userId) {
+        if (!confirm('Enable this user?')) return;
+        try {
+            const response = await fetch(`${this.baseAPI}/users/${encodeURIComponent(userId)}/enable`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) throw new Error('Failed to enable user');
+            this.showNotification('User enabled');
+            await this.loadUsers();
+        } catch (error) {
+            console.error('Error enabling user:', error);
+            this.showError('Failed to enable user');
+        }
+    }
+
+    async createUser() {
+        const username = document.getElementById('user-username')?.value?.trim();
+        const email = document.getElementById('user-email')?.value?.trim();
+        const fullName = document.getElementById('user-fullname')?.value?.trim();
+        const role = document.getElementById('user-role')?.value?.trim() || 'resident';
+
+        if (!username || !email || !fullName) {
+            this.showError('Please fill in username, email and full name');
+            return;
+        }
+
+        try {
+            const saveBtn = document.getElementById('user-save-btn');
+            const prevText = saveBtn?.innerHTML;
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...'; }
+
+            const response = await fetch(`${this.baseAPI}/users`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, fullName, role })
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => null);
+                throw new Error((err && err.error) || 'Failed to create user');
+            }
+
+            const data = await response.json();
+            this.showNotification('User created');
+            closeModal('userForm');
+            // Reset form
+            if (document.getElementById('user-username')) document.getElementById('user-username').value = '';
+            if (document.getElementById('user-email')) document.getElementById('user-email').value = '';
+            if (document.getElementById('user-fullname')) document.getElementById('user-fullname').value = '';
+            if (document.getElementById('user-role')) document.getElementById('user-role').value = 'resident';
+            await this.loadUsers();
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = prevText || 'Save'; }
+        } catch (error) {
+            console.error('Error creating user:', error);
+            this.showError('Failed to create user');
+            const saveBtn = document.getElementById('user-save-btn');
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = 'Save'; }
         }
     }
 
