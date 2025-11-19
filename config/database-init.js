@@ -47,6 +47,8 @@ async function createTables() {
                 status VARCHAR(50) DEFAULT 'active',
                 verified_at TIMESTAMP,
                 last_login_at TIMESTAMP,
+                last_login_ip VARCHAR(45),
+                mfa_enabled BOOLEAN DEFAULT false,
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             )

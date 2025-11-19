@@ -1605,6 +1605,18 @@
                     if (typeof logout === 'function') {
                         window.logout = logout;
                     }
+                    // Also bind logout to all .btn-logout buttons explicitly to ensure they call the right function
+                    document.querySelectorAll('.btn-logout').forEach(btn => {
+                        btn.removeAttribute('onclick');
+                        btn.addEventListener('click', (ev) => {
+                            ev.preventDefault();
+                            try {
+                                logout();
+                            } catch(e) {
+                                console.error('Logout handler error:', e);
+                            }
+                        });
+                    });
                 });
                 </script>
 </body>

@@ -1097,8 +1097,14 @@ async function logout() {
         // clear timers/pollers
         try { window.adminDashboard?.stopAllSectionPollers?.(); } catch (e) {}
         try { window.adminDashboard?.clearRefreshInterval?.(); } catch (e) {}
+        // clear session tokens and stored user info
         sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('userData');
         localStorage.removeItem('adminName');
+        localStorage.removeItem('userData');
+        // try a small console debug for quick tracing
+        try { console.debug('User signed out, redirecting to login'); } catch (e) {}
         window.location.href = '/login.html';
         }
     }

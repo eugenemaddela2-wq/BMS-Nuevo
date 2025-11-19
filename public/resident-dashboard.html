@@ -1144,5 +1144,14 @@
 
     <!-- SCRIPTS -->
     <script src="js/resident-dashboard-manager.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof logout === 'function') window.logout = logout;
+            document.querySelectorAll('.btn-logout').forEach(btn => {
+                btn.removeAttribute('onclick');
+                btn.addEventListener('click', (ev) => { ev.preventDefault(); logout(); });
+            });
+        });
+    </script>
 </body>
 </html>
