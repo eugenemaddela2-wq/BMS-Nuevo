@@ -144,7 +144,7 @@
             gap: 10px;
             background: rgba(0,0,0,0.2);
             position: relative; /* ensure z-index works and avoid overlay issues */
-            z-index: 20;
+            z-index: 10001;
             pointer-events: auto;
         }
 
@@ -161,7 +161,7 @@
             width: 100%;
             pointer-events: auto; /* ensure clickable */
             position: relative;
-            z-index: 30;
+            z-index: 10002; /* put button above footer and overlays */
         }
 
         .btn-logout:hover {
