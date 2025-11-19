@@ -737,6 +737,31 @@ router.post('/imports', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/admin/sessions/:id/signout - Terminate a session
+ */
+router.post('/sessions/:id/signout', async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Mark session as revoked
+        await db.query('UPDATE sessions SET revoked_at = NOW() WHERE id = $1', [id]);
+
+        // Log audit
+        await db.query(`
+            INSERT INTO audit_logs (actor_user_id, action_type, target_type, target_id, ip_address, timestamp)
+            VALUES ($1, 'TerminateSession', 'Session', $2, $3, NOW())
+        `, [req.user.userId, id, req.ip]);
+
+        // Emit SSE update
+        try { req.app.locals.emitter?.emit('update', { topic: 'sessions', action: 'terminate', id }); } catch (e) {}
+
+        res.json({ success: true, message: 'Session terminated' });
+    } catch (error) {
+        console.error('Error terminating session:', error);
+        res.status(500).json({ error: 'Failed to terminate session' });
+    }
+});
+
 // ============= DATA EXPORTS =============
 
 /**

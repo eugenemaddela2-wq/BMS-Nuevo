@@ -540,6 +540,16 @@
             transform: translateY(-2px);
         }
 
+        /* Session signout buttons should have no hover animation and only a shadow on click */
+        .session-signout {
+            transition: none !important;
+            transform: none !important;
+        }
+        .session-signout:active {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+            transform: none !important;
+        }
+
         /* ACTIVITY FEED */
         .activity-item {
             display: flex;

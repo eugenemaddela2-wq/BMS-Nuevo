@@ -344,7 +344,7 @@ class AdminDashboardManager {
                 '</div>' +
                 '<div style="display: flex; align-items: center; gap: 8px;">' +
                     `<span style="background: rgba(${this.hexToRgb(statusColor)}, 0.2); color: ${statusColor}; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600;">${status}</span>` +
-                    (!session.isCurrent ? `<button class="btn btn-danger btn-sm" onclick="adminDashboard.forceLogout('${session.sessionId}')">Sign Out</button>` : '') +
+                    (!session.isCurrent ? `<button class="btn btn-danger btn-sm session-signout" onclick="adminDashboard.forceLogout('${session.sessionId}')">Sign Out</button>` : '') +
                 '</div>' +
             '</div>';
         });
