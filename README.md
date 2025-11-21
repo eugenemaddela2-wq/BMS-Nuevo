@@ -289,10 +289,6 @@ For issues, questions, or contributions:
 - Submit a pull request
 - Contact the development team
 
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## 👥 Contributors
 
 - Development Team

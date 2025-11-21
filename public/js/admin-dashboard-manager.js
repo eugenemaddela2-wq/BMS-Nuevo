@@ -26,6 +26,15 @@ class AdminDashboardManager {
         this.init();
     }
 
+    // Helper to read preferred DB field names with fallbacks
+    getField(obj, ...keys) {
+        for (const k of keys) {
+            if (obj == null) break;
+            if (Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== undefined && obj[k] !== null) return obj[k];
+        }
+        return undefined;
+    }
+
     // Dynamic token accessor reads the active session token from sessionStorage.
     get token() {
         return sessionStorage.getItem('accessToken');
@@ -264,13 +273,14 @@ class AdminDashboardManager {
         this.data.activityFeed.forEach(activity => {
             const iconColor = activity.type === 'create' ? '#26d07c' : activity.type === 'update' ? '#667eea' : '#f5a623';
             const icon = activity.type === 'create' ? '+' : activity.type === 'update' ? '✎' : '!';
+            const ts = this.getField(activity, 'timestamp', 'created_at');
             html += `
                 <div class="activity-item">
                     <div class="activity-icon" style="background: rgba(${this.hexToRgb(iconColor)}, 0.2);">${icon}</div>
                     <div class="activity-content">
-                        <div class="activity-title">${activity.title}</div>
-                        <div class="activity-meta">${activity.actor} • ${new Date(activity.timestamp).toLocaleString()}</div>
-                        ${activity.description ? `<div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">${activity.description}</div>` : ''}
+                        <div class="activity-title">${this.getField(activity, 'title')}</div>
+                        <div class="activity-meta">${this.getField(activity, 'actor')} • ${ts ? new Date(ts).toLocaleString() : ''}</div>
+                        ${this.getField(activity, 'description') ? `<div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">${this.getField(activity, 'description')}</div>` : ''}
                     </div>
                 </div>
             `;
@@ -313,14 +323,20 @@ class AdminDashboardManager {
         }
         let html = '';
         logs.slice(0, 5).forEach(log => {
+            const actor = this.getField(log, 'actor', 'actor_name');
+            const action = this.getField(log, 'action', 'action_type');
+            const targetType = this.getField(log, 'target_type', 'targetType', 'resource_type');
+            const targetId = this.getField(log, 'target_id', 'targetId', 'resource_id');
+            const ts = this.getField(log, 'timestamp', 'created_at');
+            const ip = this.getField(log, 'ip_address', 'ipAddress', 'ip');
             html += '<div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 10px;">' +
                 '<div style="flex: 1;">' +
-                    `<p style="margin: 0; font-weight: 500;">${log.actor} • ${log.action}</p>` +
-                    `<p style="margin: 3px 0 0 0; color: var(--text-muted);">${log.targetType} #${log.targetId}</p>` +
+                    `<p style="margin: 0; font-weight: 500;">${actor} • ${action}</p>` +
+                    `<p style="margin: 3px 0 0 0; color: var(--text-muted);">${targetType} #${targetId}</p>` +
                 '</div>' +
                 '<div style="color: var(--text-muted); text-align: right;">' +
-                    `<p style="margin: 0; font-size: 10px;">${new Date(log.timestamp).toLocaleString()}</p>` +
-                    `<p style="margin: 3px 0 0 0; font-size: 9px;">${log.ipAddress}</p>` +
+                    `<p style="margin: 0; font-size: 10px;">${ts ? new Date(ts).toLocaleString() : ''}</p>` +
+                    `<p style="margin: 3px 0 0 0; font-size: 9px;">${ip || ''}</p>` +
                 '</div>' +
             '</div>';
         });
@@ -337,10 +353,12 @@ class AdminDashboardManager {
         sessions.forEach(session => {
             const status = session.isCurrent ? 'Current' : 'Active';
             const statusColor = session.isCurrent ? '#26d07c' : '#667eea';
+            const ip = this.getField(session, 'ip_address', 'ipAddress');
+            const loginAt = this.getField(session, 'login_at', 'loginAt', 'created_at');
             html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 11px;">' +
                 '<div>' +
                     `<p style="margin: 0; font-weight: 600;">${session.username}</p>` +
-                    `<p style="margin: 3px 0 0 0; color: var(--text-muted); font-size: 10px;">${session.ipAddress} • ${new Date(session.loginAt).toLocaleString()}</p>` +
+                    `<p style="margin: 3px 0 0 0; color: var(--text-muted); font-size: 10px;">${ip || ''} • ${loginAt ? new Date(loginAt).toLocaleString() : ''}</p>` +
                 '</div>' +
                 '<div style="display: flex; align-items: center; gap: 8px;">' +
                     `<span style="background: rgba(${this.hexToRgb(statusColor)}, 0.2); color: ${statusColor}; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600;">${status}</span>` +
@@ -377,18 +395,23 @@ class AdminDashboardManager {
             }
             let html = '';
             this.data.residents.forEach(resident => {
-                const statusClass = `badge-${resident.status?.toLowerCase() || 'active'}`;
+                const statusClass = `badge-${this.getField(resident, 'status')?.toLowerCase() || 'active'}`;
+                const rid = this.getField(resident, 'id', 'resident_id');
+                const fullName = `${this.getField(resident, 'first_name') || ''} ${this.getField(resident, 'last_name') || ''}`.trim();
+                const dob = this.getField(resident, 'date_of_birth');
+                const purok = this.getField(resident, 'purok', 'purok_zone', 'purokZone');
+                const contact = this.getField(resident, 'contact_number', 'contactNumber', 'phone_number');
                 html += `
                     <tr>
-                        <td>${resident.resident_id}</td>
-                        <td>${resident.first_name} ${resident.last_name}</td>
-                        <td>${resident.date_of_birth ? new Date(resident.date_of_birth).toLocaleDateString() : '-'}</td>
-                        <td>${resident.purok_zone || '-'}</td>
-                        <td>${resident.contact_number || '-'}</td>
-                        <td><span class="badge ${statusClass}">${resident.status || 'Active'}</span></td>
+                        <td>${rid}</td>
+                        <td>${fullName}</td>
+                        <td>${dob ? new Date(dob).toLocaleDateString() : '-'}</td>
+                        <td>${purok || '-'}</td>
+                        <td>${contact || '-'}</td>
+                        <td><span class="badge ${statusClass}">${this.getField(resident, 'status') || 'Active'}</span></td>
                         <td>
-                            <button class="btn btn-secondary btn-sm view-btn" data-id="${resident.resident_id}">View</button>
-                            <button class="btn btn-secondary btn-sm edit-btn" data-id="${resident.resident_id}">Edit</button>
+                            <button class="btn btn-secondary btn-sm view-btn" data-id="${rid}">View</button>
+                            <button class="btn btn-secondary btn-sm edit-btn" data-id="${rid}">Edit</button>
                         </td>
                     </tr>
                 `;
@@ -398,13 +421,13 @@ class AdminDashboardManager {
             tbody.querySelectorAll('.view-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const id = btn.getAttribute('data-id');
-                    this.viewResident(Number(id));
+                    this.viewResident(id);
                 });
             });
             tbody.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const id = btn.getAttribute('data-id');
-                    this.editResident(Number(id));
+                    this.editResident(id);
                 });
             });
     }
@@ -437,18 +460,23 @@ class AdminDashboardManager {
 
         let html = '';
         this.data.officials.forEach(official => {
-            const statusClass = `badge-${official.status?.toLowerCase() || 'active'}`;
+            const statusClass = `badge-${this.getField(official, 'status')?.toLowerCase() || 'active'}`;
+            const oid = this.getField(official, 'id', 'official_id');
+            const fullName = this.getField(official, 'full_name') || `${this.getField(official,'first_name') || ''} ${this.getField(official,'last_name') || ''}`.trim();
+            const termStart = this.getField(official, 'term_start');
+            const termEnd = this.getField(official, 'term_end');
+            const contact = this.getField(official, 'contact_number', 'contactNumber', 'phone_number', 'phoneNumber');
             html += `
                 <tr>
-                    <td>${official.full_name}</td>
-                    <td>${official.position}</td>
-                    <td>${official.term_start ? new Date(official.term_start).toLocaleDateString() : '-'}</td>
-                    <td>${official.term_end ? new Date(official.term_end).toLocaleDateString() : '-'}</td>
-                    <td>${official.contact_number || '-'}</td>
-                    <td><span class="badge ${statusClass}">${official.status || 'Active'}</span></td>
+                    <td>${fullName}</td>
+                    <td>${this.getField(official,'position') || '-'}</td>
+                    <td>${termStart ? new Date(termStart).toLocaleDateString() : '-'}</td>
+                    <td>${termEnd ? new Date(termEnd).toLocaleDateString() : '-'}</td>
+                    <td>${contact || '-'}</td>
+                    <td><span class="badge ${statusClass}">${this.getField(official,'status') || 'Active'}</span></td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.viewOfficial(${official.official_id})">View</button>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editOfficial(${official.official_id})">Edit</button>
+                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.viewOfficial('${oid}')">View</button>
+                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editOfficial('${oid}')">Edit</button>
                     </td>
                 </tr>
             `;
@@ -485,18 +513,23 @@ class AdminDashboardManager {
 
         let html = '';
         this.data.events.forEach(event => {
-            const statusClass = `badge-${event.status?.toLowerCase() || 'draft'}`;
+            const statusClass = `badge-${this.getField(event,'status')?.toLowerCase() || 'draft'}`;
+            const start = this.getField(event, 'start_date', 'start_date_time');
+            const organizer = this.getField(event, 'organizer', 'organizer_id', 'organizerName');
+            const maxCap = this.getField(event, 'max_capacity', 'capacity', 'maxCapacity');
+            const registered = this.getField(event, 'registered_count', 'registeredCount') || 0;
+            const eid = this.getField(event, 'event_id', 'id');
             html += `
                 <tr>
-                    <td>${event.title}</td>
-                    <td>${new Date(event.start_date_time).toLocaleDateString()}</td>
-                    <td>${event.organizer}</td>
-                    <td>${event.max_capacity}</td>
-                    <td id="registered-${event.event_id}">${event.registered_count || 0}</td>
-                    <td><span class="badge ${statusClass}">${event.status || 'Draft'}</span></td>
+                    <td>${this.getField(event,'title') || '-'}</td>
+                    <td>${start ? new Date(start).toLocaleDateString() : '-'}</td>
+                    <td>${organizer || '-'}</td>
+                    <td>${maxCap || '-'}</td>
+                    <td id="registered-${eid}">${registered}</td>
+                    <td><span class="badge ${statusClass}">${this.getField(event,'status') || 'Draft'}</span></td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.viewEvent(${event.event_id})">View</button>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editEvent(${event.event_id})">Edit</button>
+                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.viewEvent('${eid}')">View</button>
+                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editEvent('${eid}')">Edit</button>
                     </td>
                 </tr>
             `;
@@ -533,18 +566,22 @@ class AdminDashboardManager {
 
         let html = '';
         this.data.announcements.forEach(ann => {
-            const statusClass = `badge-${ann.status?.toLowerCase() || 'draft'}`;
+            const statusClass = `badge-${this.getField(ann,'status')?.toLowerCase() || 'draft'}`;
+            const start = this.getField(ann,'start_date_time','start_date','published_at');
+            const end = this.getField(ann,'end_date_time','end_date','published_at');
+            const author = this.getField(ann,'created_by','author_id','author');
+            const aid = this.getField(ann,'announcement_id','id');
             html += `
                 <tr>
-                    <td>${ann.title}</td>
-                    <td>${ann.audience}</td>
-                    <td>${ann.created_by}</td>
-                    <td>${ann.start_date_time ? new Date(ann.start_date_time).toLocaleDateString() : '-'}</td>
-                    <td>${ann.end_date_time ? new Date(ann.end_date_time).toLocaleDateString() : '-'}</td>
-                    <td><span class="badge ${statusClass}">${ann.status || 'Draft'}</span></td>
+                    <td>${this.getField(ann,'title') || '-'}</td>
+                    <td>${this.getField(ann,'audience') || '-'}</td>
+                    <td>${author || '-'}</td>
+                    <td>${start ? new Date(start).toLocaleDateString() : '-'}</td>
+                    <td>${end ? new Date(end).toLocaleDateString() : '-'}</td>
+                    <td><span class="badge ${statusClass}">${this.getField(ann,'status') || 'Draft'}</span></td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.viewAnnouncement(${ann.announcement_id})">View</button>
-                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editAnnouncement(${ann.announcement_id})">Edit</button>
+                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.viewAnnouncement('${aid}')">View</button>
+                        <button class="btn btn-secondary btn-sm" onclick="adminDashboard.editAnnouncement('${aid}')">Edit</button>
                     </td>
                 </tr>
             `;

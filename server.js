@@ -175,7 +175,7 @@ app.get('/api/announcements', (req,res)=>{ res.json([{ id:'A1', title:'Clearance
 app.get('/api/users', (req,res)=>{ res.json([{ userId:'U1', username:'admin', fullName:'Admin User', roles:['Admin'], status:'Active' }]); });
 app.get('/api/officials', (req,res)=>{ res.json([{ officialId:'O1', fullName:'Punong Barangay', position:'Punong Barangay', termStart:'2023', termEnd:'2026', status:'Active' }]); });
 app.get('/api/complaints', (req,res)=>{ res.json([{ ref:'C123', complainantName:'Ana', category:'Noise', dateReported: now(), status:'New', priority:'High' }]); });
-app.get('/api/audit-logs', (req,res)=>{ res.json([{ logId:'L1', timestamp: now(), actor:'Admin', actionType:'Update', targetType:'Resident', targetId:'R-001', ip:'127.0.0.1', details:'changed address' }]); });
+app.get('/api/audit-logs', (req,res)=>{ res.json([{ log_id:'L1', timestamp: now(), actor:'Admin', action_type:'Update', target_type:'Resident', target_id:'R-001', ip_address:'127.0.0.1', details:'changed address' }]); });
 
 // Public config endpoint to control demo features in frontend
 app.get('/api/config', (req, res) => {
